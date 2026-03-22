@@ -1,0 +1,17 @@
+{
+  "name": "insurai-frontend",
+  "version": "1.0.0",
+  "description": "InsurAI Corporate Policy Automation and Intelligent System - Frontend",
+  "main": "serve.js",
+  "scripts": {
+    "start": "node serve.js"
+  },
+  "keywords": [
+    "insurai",
+    "frontend",
+    "static",
+    "server"
+  ],
+  "author": "",
+  "license": "ISC"
+}

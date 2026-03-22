@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Policy – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Add New Policy</h1><p>Create a new insurance policy for an employee</p></div>
+    <a href="policies.html" class="btn btn-outline"><i data-lucide="arrow-left"></i> Back to Policies</a>
+  </div>
+
+  <div class="grid-12">
+    <div class="card">
+      <div class="card-title"><i data-lucide="file-text" style="width:16px;height:16px;color:var(--blue-light);"></i> Policy Details</div>
+
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Policy ID <small style="color:var(--gray-400);">(Auto-generated)</small></label><input type="text" id="policyNumber" class="form-control" disabled style="background:var(--gray-50);"></div>
+        <div class="form-group"><label class="form-label">Policy Type <span style="color:var(--red);">*</span></label>
+          <select class="form-control" id="policyType" required>
+            <option value="">Select type…</option>
+            <option>Health Insurance</option><option>Life Insurance</option><option>Auto Insurance</option><option>Property Insurance</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group"><label class="form-label">Policy Title <span style="color:var(--red);">*</span></label>
+        <div class="input-group">
+          <input type="text" id="policyTitle" class="form-control" placeholder="e.g. Platinum Corporate Health Plan" required>
+        </div>
+      </div>
+      
+      <div class="form-group"><label class="form-label">Assign To User</label>
+        <select class="form-control" id="assignedUserId">
+          <option value="">(Unassigned)</option>
+        </select>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Coverage Amount (₹) <span style="color:var(--red);">*</span></label>
+          <input type="number" id="coverageAmount" class="form-control" placeholder="e.g. 500000" required>
+        </div>
+        <div class="form-group"><label class="form-label">Monthly Premium (₹) <span style="color:var(--red);">*</span></label>
+          <input type="number" id="premiumAmount" class="form-control" placeholder="e.g. 2800" required>
+        </div>
+      </div>
+
+      <div class="form-group"><label class="form-label">Special Terms or Notes</label>
+        <textarea class="form-control" id="policyDesc" rows="3" placeholder="Any additional policy terms, exclusions, or notes…"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button id="createPolicyBtn" class="btn btn-primary" onclick="handleCreatePolicy()"><i data-lucide="check"></i> Create Policy</button>
+        <button class="btn btn-outline" onclick="window.location.href='policies.html'">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-title"><i data-lucide="info" style="width:16px;height:16px;color:var(--blue-light);"></i> Policy Guidelines</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--gray-600);">
+          <div style="display:flex;gap:8px;"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green);flex-shrink:0;margin-top:1px;"></i><span>Each employee can have multiple policies of different types.</span></div>
+          <div style="display:flex;gap:8px;"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green);flex-shrink:0;margin-top:1px;"></i><span>Coverage amount must align with company-approved bands per policy type.</span></div>
+          <div style="display:flex;gap:8px;"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green);flex-shrink:0;margin-top:1px;"></i><span>AI risk scoring will automatically run when policy is saved.</span></div>
+          <div style="display:flex;gap:8px;"><i data-lucide="alert-triangle" style="width:14px;height:14px;color:var(--amber);flex-shrink:0;margin-top:1px;"></i><span>Policies for employees with existing fraud flags will be reviewed.</span></div>
+        </div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--navy-light));border:none;">
+        <div style="font-size:12px;font-weight:600;color:var(--teal-light);margin-bottom:8px;">AI RECOMMENDATION</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;line-height:1.6;">For Engineering dept employees, our AI suggests <strong style="color:white;">Health + Life combo</strong> policies for optimal risk distribution and cost efficiency.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('admin', window.location.pathname);
+    requireAuth(['ADMIN']);
+    document.getElementById('policyNumber').value = 'POL-' + Math.floor(Math.random() * 90000 + 10000);
+    
+    // Load users for assignee dropdown
+    try {
+        const users = await apiRequest('/users', { method: 'GET' });
+        const select = document.getElementById('assignedUserId');
+        if (users && users.length) {
+            users.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = `${u.username} (${u.role})`;
+                select.appendChild(opt);
+            });
+        }
+    } catch(e) {
+        console.error("Failed to load users for assignment dropdown", e);
+    }
+  });
+
+  async function handleCreatePolicy() {
+    const type = document.getElementById('policyType').value;
+    const title = document.getElementById('policyTitle').value;
+    const description = document.getElementById('policyDesc').value;
+    const coverageAmount = document.getElementById('coverageAmount').value;
+    const premium = document.getElementById('premiumAmount').value;
+    const policyNumber = document.getElementById('policyNumber').value;
+
+    if(!type || !coverageAmount || !premium || !title) {
+        showToast('Please fill all required fields', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('createPolicyBtn');
+    const ogText = toggleBtnLoading(btn, true);
+
+    const payload = {
+        policyNumber, title, type, description,
+        coverageAmount: parseFloat(coverageAmount),
+        premium: parseFloat(premium)
+    };
+
+    const assignedUserId = document.getElementById('assignedUserId').value;
+    if (assignedUserId) {
+        payload.assignedUserId = parseInt(assignedUserId);
+    }
+
+    try {
+        await apiRequest('/policies', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        showToast('Policy created successfully!', 'success');
+        setTimeout(() => window.location.href = 'policies.html', 1000);
+    } catch(err) {
+        showToast(err.message || 'Failed to create policy', 'error');
+        toggleBtnLoading(btn, false, ogText);
+    }
+  }
+</script>
+</body></html>

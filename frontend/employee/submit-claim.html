@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Claim – InsurAI Employee</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Submit a Claim</h1><p>File a new insurance claim for review</p></div>
+    <a href="track-claims.html" class="btn btn-outline"><i data-lucide="search"></i> Track Existing Claims</a>
+  </div>
+
+  <div class="grid-12">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="form-group"><label class="form-label">Select Policy <span style="color:var(--red);">*</span></label>
+          <select class="form-control" id="policySelect" required>
+            <option value="">Loading policies...</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Incident Type <span style="color:var(--red);">*</span></label>
+          <select class="form-control" id="incidentType" required>
+            <option value="">Select incident type…</option>
+            <option>Hospitalization</option>
+            <option>Outpatient Treatment</option>
+            <option>Surgery</option>
+            <option>Accident</option>
+            <option>Vehicle Damage</option>
+            <option>Death Claim</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Incident Date <span style="color:var(--red);">*</span></label><input type="date" id="incidentDate" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Amount Claimed (₹) <span style="color:var(--red);">*</span></label><input type="number" id="amount" class="form-control" placeholder="e.g. 45000" required></div>
+        <div class="form-group"><label class="form-label">Hospital / Facility Name</label><input type="text" id="hospitalName" class="form-control" placeholder="e.g. Apollo Hospitals, Mumbai"></div>
+        <div class="form-group"><label class="form-label">Description <span style="color:var(--red);">*</span></label>
+          <textarea id="description" class="form-control" rows="4" placeholder="Describe the incident and the treatment received…" required></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i data-lucide="paperclip" style="width:16px;height:16px;color:var(--gray-500);"></i> Upload Documents</div>
+        <div style="border:2px dashed var(--gray-300);border-radius:var(--r-lg);padding:28px;text-align:center;cursor:pointer;transition:all var(--t-fast);" onclick="document.getElementById('document').click()" onmouseover="this.style.borderColor='var(--blue-light)'" onmouseout="this.style.borderColor='var(--gray-300)'">
+          <i data-lucide="upload-cloud" style="width:32px;height:32px;color:var(--gray-400);margin:0 auto 10px;"></i>
+          <div style="font-weight:600;font-size:14px;color:var(--gray-700);">Drop files here or click to upload</div>
+          <div style="font-size:12.5px;color:var(--gray-400);margin-top:4px;">PDF, JPG, PNG up to 10MB each</div>
+          <input type="file" id="document" accept=".pdf,.jpg,.png" style="display:none;" onchange="handleFileSelect(this)">
+        </div>
+        <div id="fileName" style="margin-top:8px; font-weight:bold; color:var(--teal);"></div>
+        <div style="margin-top:12px;font-size:12.5px;color:var(--gray-500);">Required documents: Hospital bill, Discharge summary, Prescription, Doctor's certificate</div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button id="submitClaimBtn" class="btn btn-primary" onclick="submitClaim()"><i data-lucide="send"></i> Submit Claim</button>
+          <button class="btn btn-outline" onclick="window.location.href='index.html'">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-title"><i data-lucide="info" style="width:16px;height:16px;color:var(--blue-light);"></i> Claim Checklist</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--gray-600);">
+          <div style="display:flex;gap:8px;"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green);flex-shrink:0;"></i><span>Incident must occur during the active policy period.</span></div>
+          <div style="display:flex;gap:8px;"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green);flex-shrink:0;"></i><span>Submit all original documents for faster processing.</span></div>
+          <div style="display:flex;gap:8px;"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green);flex-shrink:0;"></i><span>Claims are reviewed within 3–5 business days.</span></div>
+          <div style="display:flex;gap:8px;"><i data-lucide="alert-triangle" style="width:14px;height:14px;color:var(--amber);flex-shrink:0;"></i><span>False claims will be flagged by our AI and may result in policy cancellation.</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">My Coverage Summary</div>
+        <div id="coverageSummary" style="display:flex;flex-direction:column;gap:8px;">
+           <div style="padding:10px;text-align:center;color:var(--gray-400);">Loading coverage...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  let MY_POLICIES = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('employee', window.location.pathname);
+    requireAuth(['EMPLOYEE', 'ADMIN', 'STAFF']);
+
+    // Set default date to today
+    document.getElementById('incidentDate').valueAsDate = new Date();
+
+    // Check if policyId was pre-selected via URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectedPolicyId = urlParams.get('policyId');
+
+    // Load all policies
+    try {
+        const policies = await apiRequest('/policies/my', { method: 'GET' });
+        MY_POLICIES = policies || [];
+
+        const select = document.getElementById('policySelect');
+        select.innerHTML = '<option value="">Choose a policy\u2026</option>';
+
+        const summary = document.getElementById('coverageSummary');
+        summary.innerHTML = '';
+        let totalCoverage = 0;
+
+        if(MY_POLICIES.length > 0) {
+            MY_POLICIES.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.policyNumber || 'POL-'+p.id} \u2013 ${p.type} (\u20b9${(p.coverageAmount || 0).toLocaleString()})`;
+                if(preselectedPolicyId && String(p.id) === String(preselectedPolicyId)) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+
+                const item = document.createElement('div');
+                item.style = 'display:flex;justify-content:space-between;font-size:13.5px;';
+                item.innerHTML = `<span style="color:var(--gray-500);">${p.type}</span><strong>\u20b9${(p.coverageAmount || 0).toLocaleString()}</strong>`;
+                summary.appendChild(item);
+                totalCoverage += Number(p.coverageAmount || 0);
+            });
+
+            const totalDiv = document.createElement('div');
+            totalDiv.style = 'border-top:1px solid var(--gray-200);padding-top:8px;display:flex;justify-content:space-between;font-size:13.5px;';
+            totalDiv.innerHTML = `<span style="color:var(--gray-500);">Total Coverage</span><strong style="color:var(--blue-light);">\u20b9${totalCoverage.toLocaleString()}</strong>`;
+            summary.appendChild(totalDiv);
+        } else {
+            select.innerHTML = '<option value="">No policies available yet</option>';
+            summary.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray-400);">No policies found.</div>';
+        }
+    } catch(err) {
+        console.error('Failed to load policies', err);
+        document.getElementById('policySelect').innerHTML = '<option value="">Error loading policies</option>';
+    }
+  });
+
+  function handleFileSelect(input) {
+      const fileName = input.files[0]?.name || '';
+      document.getElementById('fileName').innerText = fileName;
+  }
+
+  async function submitClaim() {
+    const policyId = document.getElementById('policySelect').value;
+    const amount = document.getElementById('amount').value;
+    const reason = `Type: ${document.getElementById('incidentType').value}. Hospital: ${document.getElementById('hospitalName').value}. Description: ${document.getElementById('description').value}`;
+    const date = document.getElementById('incidentDate').value;
+    const docInput = document.getElementById('document');
+    
+    if(!policyId || !amount || !document.getElementById('description').value || !date) {
+        showToast("Please fill in all required fields (Policy, Amount, Date, Description).", 'error');
+        return;
+    }
+
+    const btn = document.getElementById('submitClaimBtn');
+    const ogText = toggleBtnLoading(btn, true);
+    try {
+
+        const formData = new FormData();
+        formData.append('policyId', policyId);
+        formData.append('amount', amount);
+        formData.append('reason', reason);
+        formData.append('claimType', document.getElementById('incidentType').value);
+        formData.append('notes', document.getElementById('description').value);
+        // Date is not explicitly in the multipart param for ClaimController.java but good to have if backend changes
+        // For now backend uses reason field for all text context
+        if(docInput.files.length > 0) {
+            formData.append('document', docInput.files[0]);
+        }
+
+        const res = await apiRequest('/claims', {
+            method: 'POST',
+            body: formData
+        });
+
+        showToast('Claim submitted successfully! Our AI is reviewing it.', 'success');
+        setTimeout(() => window.location.href = 'track-claims.html', 1500);
+    } catch(err) {
+        console.error('Submission error:', err);
+        showToast(err.message || 'Failed to submit claim', 'error');
+        toggleBtnLoading(btn, false, ogText);
+    }
+  }
+</script>
+</body></html>

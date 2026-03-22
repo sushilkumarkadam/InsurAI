@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Claims – InsurAI Employee</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Track My Claims</h1><p>Real-time status updates on all your filed claims</p></div>
+    <a href="submit-claim.html" class="btn btn-primary"><i data-lucide="plus"></i> New Claim</a>
+  </div>
+
+  <!-- Claim Status Tracker -->
+  <div id="activeClaimTracker" style="display:none;">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="search" style="width:16px;height:16px;color:var(--blue-light);"></i> Active Claim – <span id="activeClaimId">...</span></span>
+        <span class="badge badge-amber badge-dot" id="activeClaimStatus">...</span>
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;position:relative;" id="stepperContainer">
+           <!-- Stepper injected by JS -->
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;background:var(--gray-50);border-radius:var(--r-md);">
+        <div><div style="font-size:11px;color:var(--gray-400);font-weight:600;">CLAIM TYPE</div><div id="activeClaimType" style="font-weight:600;margin-top:2px;">...</div></div>
+        <div><div style="font-size:11px;color:var(--gray-400);font-weight:600;">AMOUNT</div><div id="activeClaimAmount" style="font-weight:600;margin-top:2px;">...</div></div>
+        <div><div style="font-size:11px;color:var(--gray-400);font-weight:600;">DATE FILED</div><div id="activeClaimDate" style="font-weight:600;margin-top:2px;">...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- All Claims Table -->
+  <div class="card">
+    <div class="card-title"><i data-lucide="list" style="width:16px;height:16px;color:var(--teal);"></i> All My Claims</div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Claim ID</th><th>Policy</th><th>Type</th><th>Filed Date</th><th>Amount</th><th>Status</th><th>Last Updated</th></tr></thead>
+        <tbody id="claimsTableBody">
+          <tr><td colspan="7" style="text-align:center;">Loading claims...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('employee', window.location.pathname);
+    requireAuth(['EMPLOYEE']);
+    
+    await loadClaims();
+  });
+
+  async function loadClaims() {
+    try {
+        const claims = await apiRequest('/claims/my', { method: 'GET' });
+        const tbody = document.getElementById('claimsTableBody');
+        tbody.innerHTML = '';
+        
+        if(!claims || claims.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No claims found.</td></tr>';
+            return;
+        }
+
+        // Sort by date descending
+        claims.sort((a,b) => new Date(b.dateSubmitted || b.createdAt) - new Date(a.dateSubmitted || a.createdAt));
+
+        // Update Tracker with the most recent one
+        const latest = claims[0];
+        updateTracker(latest);
+
+        claims.forEach(c => {
+            const tr = document.createElement('tr');
+            
+            let badgeClass = 'badge-amber';
+            if(c.status === 'APPROVED') badgeClass = 'badge-green';
+            if(c.status === 'REJECTED') badgeClass = 'badge-red';
+
+            const filedDate = new Date(c.dateSubmitted || c.createdAt).toLocaleDateString();
+            const updatedDate = c.updatedAt ? new Date(c.updatedAt).toLocaleDateString() : filedDate;
+
+            tr.innerHTML = `
+                <td><strong>CLM-${c.id}</strong></td>
+                <td>${c.policyTitle || 'POL-'+(c.policyId || '-')}</td>
+                <td>${c.claimType || 'Insurance Policy'}</td>
+                <td>${filedDate}</td>
+                <td>₹${(c.amount || 0).toLocaleString()}</td>
+                <td><span class="badge ${badgeClass} badge-dot">${c.status}</span></td>
+                <td>${updatedDate}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        if(window.lucide) lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Failed to load claims', err);
+        document.getElementById('claimsTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Failed to load claims</td></tr>';
+    }
+  }
+
+  function updateTracker(claim) {
+    if(!claim) return;
+    document.getElementById('activeClaimTracker').style.display = 'block';
+    document.getElementById('activeClaimId').textContent = 'CLM-' + claim.id;
+    document.getElementById('activeClaimStatus').textContent = claim.status;
+    document.getElementById('activeClaimType').textContent = claim.claimType || 'General';
+    document.getElementById('activeClaimAmount').textContent = '₹' + (claim.amount || 0).toLocaleString();
+    document.getElementById('activeClaimDate').textContent = new Date(claim.dateSubmitted || claim.createdAt || new Date()).toLocaleDateString();
+
+    const stepper = document.getElementById('stepperContainer');
+    stepper.innerHTML = '';
+
+    const steps = [
+        { label: 'Submitted', status: 'PENDING' },
+        { label: 'Under Review', status: 'REVIEWING' },
+        { label: 'Decision', status: 'APPROVED' }, // Logic for decision
+        { label: 'Settled', status: 'SETTLED' }
+    ];
+
+    // Simple visual logic: if status is PENDING, only first is green. 
+    // If APPROVED, first 3 are green.
+    let currentStepIndex = 0;
+    if(claim.status === 'PENDING') currentStepIndex = 0;
+    else if(claim.status === 'APPROVED' || claim.status === 'REJECTED') currentStepIndex = 2;
+    else currentStepIndex = 1; // Arbitrary mid-state
+
+    steps.forEach((step, idx) => {
+        const isDone = idx <= currentStepIndex;
+        const isCurrent = idx === currentStepIndex;
+        
+        const stepDiv = document.createElement('div');
+        stepDiv.style = "display:flex;flex-direction:column;align-items:center;z-index:1;";
+        
+        let circleBg = 'var(--gray-200)';
+        let icon = 'clock';
+        let iconCol = 'var(--gray-400)';
+
+        if(isDone) {
+            circleBg = 'var(--green)';
+            icon = 'check';
+            iconCol = 'white';
+        }
+        if(isCurrent && claim.status !== 'APPROVED' && claim.status !== 'REJECTED') {
+            circleBg = 'var(--amber)';
+            iconCol = 'white';
+        }
+        if(idx === 2 && claim.status === 'REJECTED') {
+            circleBg = 'var(--red)';
+        }
+
+        stepDiv.innerHTML = `
+            <div style="width:32px;height:32px;border-radius:50%;background:${circleBg};display:flex;align-items:center;justify-content:center;"><i data-lucide="${icon}" style="width:16px;height:16px;color:${iconCol};"></i></div>
+            <div style="font-size:11px;color:${circleBg === 'var(--gray-200)' ? 'var(--gray-400)' : circleBg};font-weight:600;margin-top:4px;text-align:center;">${step.label}</div>
+        `;
+        stepper.appendChild(stepDiv);
+
+        if(idx < steps.length - 1) {
+            const line = document.createElement('div');
+            line.style = `flex:1;height:3px;background:${idx < currentStepIndex ? 'var(--green)' : 'var(--gray-200)'};`;
+            stepper.appendChild(line);
+        }
+    });
+  }
+</script>
+</body></html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile – InsurAI Employee</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header"><h1>My Profile</h1><p>Manage your account and personal information</p></div>
+  <div class="grid-12">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card" style="padding:0;overflow:hidden;align-self:start;">
+        <div class="profile-cover" style="height:100px;background:linear-gradient(135deg,#1a1a5e,#2d2d9e);"></div>
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" style="background:linear-gradient(135deg,#4F46E5,#6366F1);" id="profileInitials">JD</div>
+          <div class="profile-info" style="padding-bottom:4px;"><h2 id="profileName">Loading...</h2><span id="profileRole">Loading...</span></div>
+        </div>
+        <div style="padding:0 20px 20px;font-size:13.5px;display:flex;flex-direction:column;gap:8px;color:var(--gray-600);">
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="mail" style="width:14px;height:14px;"></i> <span id="profileEmail">...</span></div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="briefcase" style="width:14px;height:14px;"></i> <span id="profileId">...</span></div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="building" style="width:14px;height:14px;"></i> <span id="profileDept">...</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Coverage Summary</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:13.5px;">
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-500);">Active Policies</span><strong>3</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-500);">Total Coverage</span><strong style="color:var(--blue-light);">₹17,00,000</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-500);">Claims Filed</span><strong>2</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i data-lucide="user" style="width:16px;height:16px;color:var(--indigo);"></i> Edit Personal Information</div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="editName" class="form-control" value=""></div>
+        <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" id="editPhone" class="form-control" value=""></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email Address</label><input type="email" id="editEmail" class="form-control" value="" readonly style="background:var(--gray-50)"></div>
+      <div class="form-group"><label class="form-label">Emergency Contact</label><input type="text" class="form-control" placeholder="Name and phone number"></div>
+      <div class="form-group"><label class="form-label">Preferred Language</label>
+        <select class="form-control"><option>English</option><option>Hindi</option><option>Tamil</option></select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="saveEmployeeProfile()"><i data-lucide="save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  let currentEmployeeProfile = null;
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('employee', window.location.pathname);
+    requireAuth(['EMPLOYEE']);
+    
+    try {
+        const user = await apiRequest('/users/me', { method: 'GET' });
+        if(user) {
+            currentEmployeeProfile = user;
+            document.getElementById('profileName').textContent = user.username || 'User';
+            document.getElementById('profileRole').textContent = user.role || 'Employee';
+            document.getElementById('profileEmail').textContent = user.email || '-';
+            document.getElementById('profileId').textContent = 'Employee ID: ' + (user.id || '-');
+            document.getElementById('profileDept').textContent = user.department || 'N/A';
+            
+            const initials = (user.username || 'JD').substring(0, 2).toUpperCase();
+            document.getElementById('profileInitials').textContent = initials;
+            
+            document.getElementById('editName').value = user.username || '';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editPhone').value = user.phone || '';
+        }
+    } catch(err) {
+        console.error('Failed to load profile', err);
+    }
+  });
+
+  async function saveEmployeeProfile() {
+      if(!currentEmployeeProfile) return;
+      const payload = {
+          ...currentEmployeeProfile,
+          username: document.getElementById('editName').value,
+          phone: document.getElementById('editPhone').value
+      };
+      
+      try {
+          await apiRequest(`/users/${currentEmployeeProfile.id}`, {
+              method: 'PUT',
+              body: JSON.stringify(payload)
+          });
+          showToast('Profile updated successfully!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+      } catch(e) {
+          showToast('Failed to update: ' + e.message + ' (Note: Editing profile currently restricted to ADMIN)', 'error');
+      }
+  }
+</script>
+</body></html>

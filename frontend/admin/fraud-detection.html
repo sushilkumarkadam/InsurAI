@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fraud Detection – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+  <script src="../assets/js/chart.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+
+  <div class="ai-banner">
+    <div class="ai-banner-icon"><i data-lucide="shield-alert"></i></div>
+    <div class="ai-banner-text">
+      <h4>AI Fraud Engine Active</h4>
+      <p>2 new high-confidence fraud patterns detected today · Processing 143 claims in real-time</p>
+    </div>
+    <div class="ai-banner-actions">
+      <button class="btn-ai solid"><i data-lucide="zap"></i> Run AI Scan</button>
+    </div>
+  </div>
+
+  <div class="page-header-row">
+    <div><h1>Fraud Detection</h1><p>AI-powered fraud monitoring and investigation queue</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline"><i data-lucide="download"></i> Export Report</button>
+      <button class="btn btn-danger"><i data-lucide="shield-alert"></i> Mark All Reviewed</button>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+    <div class="stat-card red"><div class="stat-icon red"><i data-lucide="shield-alert"></i></div><div class="stat-label">Critical Alerts</div><div class="stat-value" id="statCriticalAlerts" style="font-size:22px;">...</div></div>
+    <div class="stat-card amber"><div class="stat-icon amber"><i data-lucide="alert-triangle"></i></div><div class="stat-label">Under Review</div><div class="stat-value" id="statUnderReviewAlerts" style="font-size:22px;">...</div></div>
+    <div class="stat-card green"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div class="stat-label">Cleared Today</div><div class="stat-value" id="statClearedAlerts" style="font-size:22px;">...</div></div>
+    <div class="stat-card blue"><div class="stat-icon blue"><i data-lucide="brain"></i></div><div class="stat-label">AI Confidence Avg</div><div class="stat-value" id="statAvgConfidence" style="font-size:22px;">...</div></div>
+  </div>
+
+  <div class="grid-12 mb-16">
+    <!-- Fraud Queue -->
+    <div class="card">
+      <div class="card-title"><i data-lucide="shield-alert" style="width:16px;height:16px;color:var(--red);"></i> Active Fraud Queue</div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Claim ID</th><th>Claimant</th><th>Type</th><th>Amount</th><th>AI Score</th><th>Flags</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="fraudTableBody">
+            <tr><td colspan="8" style="text-align:center;">Loading fraud alerts...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- AI Explainability -->
+    <div class="card" id="explainabilityPanel">
+      <div class="card-title"><i data-lucide="brain" style="width:16px;height:16px;color:var(--indigo);"></i> AI Explainability Panel</div>
+      <div id="explainabilityContent">
+        <div style="text-align:center;padding:40px 20px;color:var(--gray-400);">
+            <i data-lucide="info" style="width:32px;height:32px;margin-bottom:12px;"></i>
+            <p>Select a claim from the queue to view detailed AI analysis</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fraud Trend Chart -->
+  <div class="card">
+    <div class="card-title"><i data-lucide="activity" style="width:16px;height:16px;color:var(--red);"></i> Fraud Detection Trend (6 Months)</div>
+    <div class="chart-wrap"><canvas id="fraudTrendChart"></canvas></div>
+  </div>
+
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  let ALL_ALERTS = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('admin', window.location.pathname);
+    requireAuth(['ADMIN']);
+    
+    await loadFraudAlerts();
+    initChart();
+  });
+
+  async function loadFraudAlerts() {
+    try {
+        const alerts = await apiRequest('/fraud-alerts', { method: 'GET' });
+        ALL_ALERTS = alerts || [];
+        const tbody = document.getElementById('fraudTableBody');
+        tbody.innerHTML = '';
+        
+        let critical = 0, underReview = 0, cleared = 0, totalConfidence = 0;
+
+        if(!alerts || alerts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No active fraud alerts. System is clear.</td></tr>';
+        } else {
+            alerts.forEach(a => {
+                const claim = a.claim || {};
+                const score = claim.riskScore || 0;
+                totalConfidence += score;
+
+                if(score >= 85) critical++;
+                else underReview++;
+
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => showExplainability(a);
+                
+                let scoreBadge = 'badge-amber';
+                let statusBadge = 'badge-amber';
+                let statusLabel = 'Under Review';
+
+                if(score >= 85) {
+                    scoreBadge = 'badge-red';
+                    statusBadge = 'badge-red';
+                    statusLabel = 'Critical';
+                }
+
+                tr.innerHTML = `
+                    <td><strong>CLM-${claim.id || '???'}</strong></td>
+                    <td>${claim.user ? claim.user.username : '-'}</td>
+                    <td>${claim.policy ? claim.policy.type : '-'}</td>
+                    <td>₹${(claim.amount || 0).toLocaleString()}</td>
+                    <td><span class="badge ${scoreBadge}">${score}%</span></td>
+                    <td><span style="font-size:12px;">${a.reason || 'Anomalous pattern'}</span></td>
+                    <td><span class="badge ${statusBadge} badge-dot">${statusLabel}</span></td>
+                    <td><button class="btn btn-outline btn-sm">Review</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Update stats
+        document.getElementById('statCriticalAlerts').textContent = critical;
+        document.getElementById('statUnderReviewAlerts').textContent = underReview;
+        document.getElementById('statClearedAlerts').textContent = cleared;
+        document.getElementById('statAvgConfidence').textContent = alerts.length > 0 ? (totalConfidence / alerts.length).toFixed(0) + '%' : '0%';
+        
+    } catch (err) {
+        console.error('Failed to load fraud alerts', err);
+        document.getElementById('fraudTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Failed to load fraud alerts</td></tr>';
+    }
+  }
+
+  function showExplainability(alert) {
+    const claim = alert.claim || {};
+    const content = document.getElementById('explainabilityContent');
+    const score = claim.riskScore || 0;
+    
+    content.innerHTML = `
+      <div style="font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Why CLM-${claim.id} was flagged</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="padding:10px 12px;background:var(--red-bg);border-radius:var(--r-md);border-left:3px solid var(--red);">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:2px;">Primary Reason (+${(score * 0.4).toFixed(0)} pts)</div>
+          <div style="font-size:12px;color:var(--gray-600);">${alert.reason}</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--amber-bg);border-radius:var(--r-md);border-left:3px solid var(--amber);">
+          <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:2px;">Claimed Amount (${claim.amount})</div>
+          <div style="font-size:12px;color:var(--gray-600);">Claim amount is statistically flagged based on historical department averages.</div>
+        </div>
+        <div style="margin-top:4px;padding:10px 14px;background:var(--navy);border-radius:var(--r-md);text-align:center;">
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:2px;">AI FRAUD CONFIDENCE</div>
+          <div style="font-size:24px;font-weight:800;color:${score >= 85 ? 'var(--red)' : 'var(--amber)'};">${score}%</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);">Recommended: ${score >= 85 ? 'Reject & Escalate' : 'Manual Verification'}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function initChart() {
+    const ctx = document.getElementById('fraudTrendChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Oct','Nov','Dec','Jan','Feb','Mar'],
+        datasets: [
+          { label:'Flagged', data:[14,18,12,20,16,7], backgroundColor:'rgba(220,38,38,0.7)', borderRadius:4 },
+          { label:'Confirmed Fraud', data:[3,5,2,7,4,2], backgroundColor:'#DC2626', borderRadius:4 }
+        ]
+      },
+      options: { responsive:true, maintainAspectRatio:false, scales:{ x:{grid:{display:false}}, y:{grid:{borderDash:[4,4]}} }, plugins:{ legend:{position:'top'} } }
+    });
+  }
+</script>
+</body></html>

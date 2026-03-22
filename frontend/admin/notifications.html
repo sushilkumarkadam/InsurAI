@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Notifications</h1><p>System alerts, approvals, and activity notifications</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm">Mark all read</button>
+      <button class="btn btn-outline btn-sm"><i data-lucide="settings"></i> Preferences</button>
+    </div>
+  </div>
+
+  <div class="grid-12">
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--gray-200);display:flex;gap:8px;" id="notificationTabs">
+        <button class="settings-tab active" data-filter="all" style="padding:6px 14px;font-size:13px;">All</button>
+        <button class="settings-tab" data-filter="unread" style="padding:6px 14px;font-size:13px;" id="unreadTab">Unread (...)</button>
+      </div>
+      <div id="notificationsList">
+        <div style="padding:40px;text-align:center;color:var(--gray-400);">Loading notifications...</div>
+      </div>
+    </div>
+    <!-- Notification Summary -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-title">Summary</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;"><span style="color:var(--gray-500);">Unread</span><strong style="color:var(--blue-light);" id="summaryUnread">...</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;"><span style="color:var(--gray-500);">Total</span><strong style="color:var(--gray-600);" id="summaryTotal">...</strong></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="fraud-detection.html" class="btn btn-danger btn-sm" style="justify-content:center;"><i data-lucide="shield-alert"></i> Review Fraud Alerts</a>
+          <a href="claims.html" class="btn btn-primary btn-sm" style="justify-content:center;"><i data-lucide="alert-circle"></i> Review Claims</a>
+          <a href="user-management.html" class="btn btn-outline btn-sm" style="justify-content:center;"><i data-lucide="user-check"></i> Approve Users</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  let ALL_NOTIFICATIONS = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('admin', window.location.pathname);
+    requireAuth(['ADMIN']);
+    
+    await loadNotifications();
+    
+    document.querySelectorAll('#notificationTabs .settings-tab').forEach(tab => {
+        tab.onclick = () => {
+            document.querySelector('#notificationTabs .settings-tab.active').classList.remove('active');
+            tab.classList.add('active');
+            renderNotifications(tab.dataset.filter);
+        };
+    });
+  });
+
+  async function loadNotifications() {
+    try {
+        const notifications = await apiRequest('/notifications', { method: 'GET' });
+        ALL_NOTIFICATIONS = notifications || [];
+        renderNotifications('all');
+    } catch (err) {
+        console.error('Failed to load notifications', err);
+        document.getElementById('notificationsList').innerHTML = '<div style="padding:40px;text-align:center;color:red;">Failed to load notifications</div>';
+    }
+  }
+
+  function renderNotifications(filter = 'all') {
+    const list = document.getElementById('notificationsList');
+    list.innerHTML = '';
+    
+    let filtered = ALL_NOTIFICATIONS;
+    if(filter === 'unread') filtered = ALL_NOTIFICATIONS.filter(n => !n.isRead);
+    
+    let unreadCount = ALL_NOTIFICATIONS.filter(n => !n.isRead).length;
+    document.getElementById('unreadTab').textContent = `Unread (${unreadCount})`;
+    document.getElementById('summaryUnread').textContent = unreadCount;
+    document.getElementById('summaryTotal').textContent = ALL_NOTIFICATIONS.length;
+
+    if(filtered.length === 0) {
+        list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray-400);">No notifications found.</div>';
+        return;
+    }
+
+    filtered.forEach(n => {
+        const div = document.createElement('div');
+        div.className = `notif-item ${!n.isRead ? 'unread' : ''}`;
+        div.onclick = () => markRead(n.id);
+        
+        let icon = 'bell';
+        let bg = '#EFF6FF';
+        let color = 'var(--blue-light)';
+
+        if(n.message.toLowerCase().includes('fraud')) { icon = 'shield-alert'; bg = 'var(--red-bg)'; color = 'var(--red)'; }
+        if(n.message.toLowerCase().includes('approved')) { icon = 'check-circle'; bg = '#F0FDFA'; color = 'var(--teal)'; }
+        if(n.message.toLowerCase().includes('expire')) { icon = 'calendar'; bg = 'var(--amber-bg)'; color = 'var(--amber)'; }
+
+        const date = new Date(n.dateSent).toLocaleString();
+
+        div.innerHTML = `
+            <div class="notif-icon" style="background:${bg};"><i data-lucide="${icon}" style="color:${color};"></i></div>
+            <div class="notif-body">
+                <strong>Notification</strong>
+                <p>${n.message}</p>
+                <span class="notif-meta">${date}</span>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+    
+    if(window.lucide) lucide.createIcons();
+  }
+
+  async function markRead(id) {
+    try {
+        await apiRequest(`/notifications/${id}/read`, { method: 'PUT' });
+        loadNotifications();
+    } catch(err) {
+        console.error('Failed to mark as read', err);
+    }
+  }
+</script>
+</body></html>

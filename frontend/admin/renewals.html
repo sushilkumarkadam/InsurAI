@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Renewals – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Policy Renewals</h1><p>Track and manage upcoming policy renewals</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline"><i data-lucide="send"></i> Send Reminders</button>
+      <button class="btn btn-primary"><i data-lucide="refresh-cw"></i> Bulk Renew</button>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+    <div class="stat-card red"><div class="stat-icon red"><i data-lucide="alert-triangle"></i></div><div class="stat-label">Due This Week</div><div class="stat-value" id="statDueWeek" style="font-size:22px;">...</div></div>
+    <div class="stat-card amber"><div class="stat-icon amber"><i data-lucide="calendar"></i></div><div class="stat-label">Due This Month</div><div class="stat-value" id="statDueMonth" style="font-size:22px;">...</div></div>
+    <div class="stat-card green"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div class="stat-label">Renewed Today</div><div class="stat-value" id="statRenewedToday" style="font-size:22px;">...</div></div>
+    <div class="stat-card blue"><div class="stat-icon blue"><i data-lucide="clock"></i></div><div class="stat-label">Auto-Renew Enabled</div><div class="stat-value" id="statAutoRenew" style="font-size:22px;">...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i data-lucide="calendar" style="width:16px;height:16px;color:var(--amber);"></i> Upcoming Renewals</div>
+    <div class="filters-bar" style="margin-bottom:14px;">
+      <div class="filter-search"><i data-lucide="search"></i><input type="text" placeholder="Search policy or employee…"></div>
+      <select class="filter-select"><option>All Urgency</option><option>This Week</option><option>This Month</option></select>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Policy ID</th><th>Employee</th><th>Department</th><th>Type</th><th>Current Premium</th><th>Expiry Date</th><th>Days Left</th><th>Auto-Renew</th><th>Action</th></tr></thead>
+        <tbody id="renewalsTableBody">
+          <tr><td colspan="9" style="text-align:center;">Loading upcoming renewals...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span id="renewalPaginationInfo">Showing 0–0 of 0 upcoming renewals</span>
+      <div class="page-btns">
+        <button class="page-btn active">1</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('admin', window.location.pathname);
+    requireAuth(['ADMIN']);
+    
+    await loadRenewals();
+  });
+
+  async function loadRenewals() {
+    try {
+        const policies = await apiRequest('/policies', { method: 'GET' });
+        const tbody = document.getElementById('renewalsTableBody');
+        tbody.innerHTML = '';
+        
+        const now = new Date();
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+        const oneMonth = 30 * 24 * 60 * 60 * 1000;
+
+        // Filter for upcoming renewals (expiring in next 60 days for demo purposes)
+        const upcoming = (policies || []).filter(p => {
+            if(!p.expiryDate) return false;
+            const diff = new Date(p.expiryDate) - now;
+            return diff > 0 && diff < (twoMonths = 60 * 24 * 60 * 60 * 1000);
+        });
+
+        let dueWeek = 0, dueMonth = 0, autoRenewCount = 0;
+
+        if(upcoming.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No upcoming renewals found.</td></tr>';
+            document.getElementById('renewalPaginationInfo').textContent = 'Showing 0 renewals';
+        } else {
+            upcoming.forEach(p => {
+                const diffMs = new Date(p.expiryDate) - now;
+                const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+                
+                if(daysLeft <= 7) dueWeek++;
+                if(daysLeft <= 30) dueMonth++;
+                // Using status as proxy for auto-renew since it's not in DTO explicitly
+                const isAuto = p.status === 'ACTIVE'; 
+                if(isAuto) autoRenewCount++;
+
+                const tr = document.createElement('tr');
+                
+                let daysBadge = 'badge-gray';
+                if(daysLeft <= 7) daysBadge = 'badge-red';
+                else if(daysLeft <= 30) daysBadge = 'badge-amber';
+
+                tr.innerHTML = `
+                    <td><strong>${p.policyNumber || p.id}</strong></td>
+                    <td>${p.user ? p.user.username : '-'}</td>
+                    <td>${p.user ? (p.user.department || '-') : '-'}</td>
+                    <td>${p.type}</td>
+                    <td>₹${(p.premium || 0).toLocaleString()}</td>
+                    <td>${new Date(p.expiryDate).toLocaleDateString()}</td>
+                    <td><span class="badge ${daysBadge}">${daysLeft} days</span></td>
+                    <td><span class="badge ${isAuto ? 'badge-green' : 'badge-red'}">${isAuto ? 'On' : 'Off'}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="renewPolicy(${p.id})"><i data-lucide="refresh-cw"></i> Renew</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('renewalPaginationInfo').textContent = `Showing 1–${upcoming.length} of ${upcoming.length} upcoming renewals`;
+        }
+
+        document.getElementById('statDueWeek').textContent = dueWeek;
+        document.getElementById('statDueMonth').textContent = dueMonth;
+        document.getElementById('statRenewedToday').textContent = '0'; // Placeholder
+        document.getElementById('statAutoRenew').textContent = autoRenewCount;
+
+        if(window.lucide) lucide.createIcons();
+
+    } catch (err) {
+        console.error('Failed to load renewals', err);
+        document.getElementById('renewalsTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">Failed to load renewals</td></tr>';
+    }
+  }
+
+  function renewPolicy(id) { alert('Renewing policy ID: ' + id); }
+</script>
+</body></html>

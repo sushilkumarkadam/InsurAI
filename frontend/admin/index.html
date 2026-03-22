@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – InsurAI</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+  <script src="../assets/js/chart.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+
+  <!-- AI Banner -->
+  <div class="ai-banner">
+    <div class="ai-banner-icon"><i data-lucide="brain"></i></div>
+    <div class="ai-banner-text">
+      <h4>AI Insights Available</h4>
+      <p>3 new fraud patterns detected · 2 high-risk policies require immediate review · Claim volume up 18% this week</p>
+    </div>
+    <div class="ai-banner-actions">
+      <button class="btn-ai solid"><i data-lucide="eye"></i> View AI Report</button>
+      <button class="btn-ai"><i data-lucide="x"></i> Dismiss</button>
+    </div>
+  </div>
+
+  <!-- Page Header + Quick Actions -->
+  <div class="page-header-row">
+    <div>
+      <h1>Admin Dashboard</h1>
+      <p>System overview and analytics — March 2026</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="add-policy.html" class="btn btn-outline btn-sm"><i data-lucide="plus"></i> Add Policy</a>
+      <a href="claims.html" class="btn btn-outline btn-sm"><i data-lucide="alert-circle"></i> Review Claims</a>
+      <a href="risk-analysis.html" class="btn btn-outline btn-sm"><i data-lucide="trending-up"></i> Risk Analysis</a>
+      <a href="reports.html" class="btn btn-primary btn-sm"><i data-lucide="bar-chart-2"></i> Reports</a>
+    </div>
+  </div>
+
+  <!-- KPI Stat Cards -->
+  <div class="stat-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon blue"><i data-lucide="file-text"></i></div>
+      <div class="stat-label">Total Policies</div>
+      <div class="stat-value" id="statPolicies">1,240</div>
+      <span class="stat-trend up" id="trendPolicies"><i data-lucide="trending-up"></i> +12%</span>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-icon teal"><i data-lucide="alert-circle"></i></div>
+      <div class="stat-label">Total Claims</div>
+      <div class="stat-value" id="statClaims">548</div>
+      <span class="stat-trend up" id="trendClaims"><i data-lucide="trending-up"></i> Active</span>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-icon amber"><i data-lucide="clock"></i></div>
+      <div class="stat-label">Pending Claims</div>
+      <div class="stat-value" id="statPending">73</div>
+      <span class="stat-trend down"><i data-lucide="trending-down"></i> Needs attention</span>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon red"><i data-lucide="shield-alert"></i></div>
+      <div class="stat-label">Fraud Alerts</div>
+      <div class="stat-value" id="statFraud">7</div>
+      <span class="stat-trend down"><i data-lucide="alert-triangle"></i> Review required</span>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon green"><i data-lucide="calendar"></i></div>
+      <div class="stat-label">Upcoming Renewals</div>
+      <div class="stat-value" id="statRenewals">34</div>
+      <span class="stat-trend up">Within 30 days</span>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-icon purple"><i data-lucide="users"></i></div>
+      <div class="stat-label">Active Users</div>
+      <div class="stat-value" id="statUsers">289</div>
+      <span class="stat-trend up">All system users</span>
+    </div>
+    <div class="stat-card indigo">
+      <div class="stat-icon indigo"><i data-lucide="trending-up"></i></div>
+      <div class="stat-label">Total Revenue</div>
+      <div class="stat-value" id="statRevenue">...</div>
+      <span class="stat-trend up"><i data-lucide="trending-up"></i> YTD Volume</span>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-icon green"><i data-lucide="check-circle"></i></div>
+      <div class="stat-label">Resolved</div>
+      <div class="stat-value" id="statResolved">412</div>
+      <span class="stat-trend up"><i data-lucide="trending-up"></i> Completed</span>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="grid-2 mb-16">
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="pie-chart" style="width:16px;height:16px;color:var(--blue-light);"></i> Policy Distribution</span>
+        <select class="filter-select" style="font-size:12px;padding:4px 8px;">
+          <option>2026</option><option>2025</option>
+        </select>
+      </div>
+      <div class="chart-wrap"><canvas id="policyPieChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="bar-chart-2" style="width:16px;height:16px;color:var(--teal);"></i> Claim Status Trends</span>
+        <select class="filter-select" style="font-size:12px;padding:4px 8px;">
+          <option>Last 6 Months</option><option>Last 12 Months</option>
+        </select>
+      </div>
+      <div class="chart-wrap"><canvas id="claimStatusChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 + Activity -->
+  <div class="grid-12 mb-16">
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="activity" style="width:16px;height:16px;color:var(--indigo);"></i> Risk Level Analytics</span>
+        <span class="badge badge-blue">Live</span>
+      </div>
+      <div class="chart-wrap"><canvas id="riskLevelChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="clock" style="width:16px;height:16px;color:var(--gray-500);"></i> Recent Activity</span>
+        <a href="#" style="font-size:12px;color:var(--blue-light);font-weight:500;">View all</a>
+      </div>
+      <div class="activity-feed">
+        <div class="activity-item">
+          <div class="activity-dot green"></div>
+          <div class="activity-content"><strong>New policy created</strong><span>Health policy for TechCorp Dept · by Admin</span></div>
+          <span class="activity-time">2m ago</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot green"></div>
+          <div class="activity-content"><strong>Claim #CLM-0421 approved</strong><span>Auto insurance · ₹45,000 · by Sarah Chen</span></div>
+          <span class="activity-time">15m ago</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot red"></div>
+          <div class="activity-content"><strong>Fraud alert triggered</strong><span>Claim #CLM-0418 flagged · High confidence</span></div>
+          <span class="activity-time">1h ago</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot blue"></div>
+          <div class="activity-content"><strong>User role updated</strong><span>James Wilson → Claims Staff · by Admin</span></div>
+          <span class="activity-time">2h ago</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot amber"></div>
+          <div class="activity-content"><strong>Policy renewal processed</strong><span>Life policy #POL-0892 · Auto-renewed</span></div>
+          <span class="activity-time">3h ago</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-dot green"></div>
+          <div class="activity-content"><strong>Report generated</strong><span>Q1 2026 Analytics Report · by Admin</span></div>
+          <span class="activity-time">5h ago</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fraud Alert Queue + AI Insights -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="shield-alert" style="width:16px;height:16px;color:var(--red);"></i> Fraud Alert Queue</span>
+        <a href="fraud-detection.html" class="btn btn-danger btn-sm"><i data-lucide="eye"></i> Review All</a>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Claim ID</th><th>Claimant</th><th>Risk Score</th><th>Status</th></tr>
+          </thead>
+          <tbody id="adminClaimsTable">
+            <tr>
+              <td colspan="4" style="text-align:center;">Loading claims...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--navy-light));border-color:transparent;">
+      <div class="card-title" style="color:white;margin-bottom:14px;">
+        <i data-lucide="brain" style="width:16px;height:16px;color:var(--teal-light);"></i> AI Insights Panel
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:rgba(255,255,255,0.07);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.1);">
+          <div style="font-size:12px;font-weight:600;color:var(--teal-light);margin-bottom:4px;">RISK FORECAST</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.8);">Auto insurance claims predicted to rise 22% next quarter based on seasonal patterns.</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.07);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.1);">
+          <div style="font-size:12px;font-weight:600;color:#f59e0b;margin-bottom:4px;">ANOMALY DETECTED</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.8);">3 claims from same IP address with different employee IDs — possible identity fraud.</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.07);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.1);">
+          <div style="font-size:12px;font-weight:600;color:#22c55e;margin-bottom:4px;">OPTIMIZATION</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.8);">Reducing claim processing to 3 days could improve satisfaction scores by 31%.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('admin', window.location.pathname);
+    requireAuth(['ADMIN']);
+
+    try {
+        const stats = await apiRequest('/dashboard/admin', { method: 'GET' });
+        if(stats) {
+            document.getElementById('statPolicies').textContent = (stats.totalPolicies || 0).toLocaleString();
+            document.getElementById('statClaims').textContent = (stats.totalClaims || 0).toLocaleString();
+            document.getElementById('statPending').textContent = (stats.pendingClaims || 0).toLocaleString();
+            document.getElementById('statUsers').textContent = (stats.totalUsers || 0).toLocaleString();
+            document.getElementById('statResolved').textContent = (stats.approvedClaims || 0).toLocaleString();
+            document.getElementById('statFraud').textContent = (stats.fraudAlerts || 0).toLocaleString();
+
+            if(stats.totalRevenue !== undefined && stats.totalRevenue !== null) {
+                document.getElementById('statRevenue').textContent = '₹' + Number(stats.totalRevenue).toLocaleString('en-IN');
+            } else {
+                document.getElementById('statRevenue').textContent = '₹0';
+            }
+
+            // Update AI Banner with real data
+            const bannerP = document.querySelector('.ai-banner-text p');
+            if(bannerP) {
+                bannerP.textContent = `${stats.pendingClaims || 0} pending claims require review · ${stats.fraudAlerts || 0} active fraud alerts detected · ${stats.approvedClaims || 0} claims approved`;
+            }
+        }
+    } catch(err) {
+        console.error('Failed to load admin stats', err);
+    }
+
+    try {
+        const claims = await apiRequest('/claims/all', { method: 'GET' });
+        const tbody = document.getElementById('adminClaimsTable');
+        const activityFeed = document.querySelector('.activity-feed');
+
+        if(claims && claims.length > 0) {
+            // Queue Table (Recent Pending)
+            tbody.innerHTML = '';
+            const pendingClaims = claims.filter(c => c.status === 'PENDING').slice(0, 5);
+            if(pendingClaims.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No pending claims in queue</td></tr>';
+            } else {
+                pendingClaims.forEach(c => {
+                    const tr = document.createElement('tr');
+                    const simulatedScore = Math.floor(Math.random() * 30) + 65; // Simulated AI score
+                    tr.innerHTML = `
+                        <td><strong>CLM-${c.id}</strong></td>
+                        <td>User ${c.userId || c.user?.username || '-'}</td>
+                        <td><span style="color:var(--red); font-weight:700;">${simulatedScore}%</span></td>
+                        <td><span class="badge badge-amber badge-dot">${c.status}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Activity Feed (Most Recent Updates)
+            activityFeed.innerHTML = '';
+            const sortedClaims = [...claims].sort((a,b) => {
+                const dateA = a.dateSubmitted || a.createdAt || new Date(0);
+                const dateB = b.dateSubmitted || b.createdAt || new Date(0);
+                return new Date(dateB) - new Date(dateA);
+            });
+            sortedClaims.slice(0, 6).forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                let dotCol = 'blue';
+                if(c.status === 'APPROVED') dotCol = 'green';
+                if(c.status === 'REJECTED') dotCol = 'red';
+                if(c.status === 'PENDING') dotCol = 'amber';
+
+                const activityDate = new Date(c.dateSubmitted || c.createdAt || new Date());
+                const timeDiff = Math.floor((new Date() - activityDate) / 60000);
+                let timeStr = timeDiff + 'm ago';
+                if(timeDiff >= 60) timeStr = Math.floor(timeDiff/60) + 'h ago';
+                if(timeDiff >= 1440) timeStr = Math.floor(timeDiff/1440) + 'd ago';
+                if(timeDiff < 0) timeStr = 'just now';
+
+                item.innerHTML = `
+                    <div class="activity-dot ${dotCol}"></div>
+                    <div class="activity-content"><strong>Claim ${c.status}</strong><span>CLM-${c.id} for Developer (User ${c.userId || 'Sys'}) · ₹${(c.amount||0).toLocaleString()}</span></div>
+                    <span class="activity-time">${timeStr}</span>
+                `;
+                activityFeed.appendChild(item);
+            });
+        }
+    } catch(err) {
+        console.error('Activity load error', err);
+    }
+
+    // Charts
+    try {
+        const policies = await apiRequest('/policies', { method: 'GET' });
+        if(policies && policies.length) {
+            const counts = { 'Health Insurance':0, 'Life Insurance':0, 'Auto Insurance':0, 'Property Insurance':0, 'Travel Insurance':0 };
+            policies.forEach(p => { if(counts[p.type] !== undefined) counts[p.type]++; else counts['Other'] = (counts['Other'] || 0) + 1; });
+            
+            const pieCtx = document.getElementById('policyPieChart')?.getContext('2d');
+            if(pieCtx) {
+              new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                  labels: ['Health', 'Life', 'Auto', 'Property', 'Travel'],
+                  datasets: [{ data: [counts['Health Insurance'], counts['Life Insurance'], counts['Auto Insurance'], counts['Property Insurance'], counts['Travel Insurance']], backgroundColor: ['#2563EB','#0D9488','#4F46E5','#D97706', '#DC2626'], borderWidth: 3, borderColor: '#fff' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '65%' }
+              });
+            }
+        }
+    } catch(e) {}
+        
+        // Count claims by status
+        let appr = 0, pend = 0, rej = 0;
+        if (claims) {
+            appr = claims.filter(c => c.status === 'APPROVED').length;
+            pend = claims.filter(c => c.status === 'PENDING').length;
+            rej = claims.filter(c => c.status === 'REJECTED').length;
+        }
+
+        const barCtx = document.getElementById('claimStatusChart')?.getContext('2d');
+        if(barCtx) {
+          new Chart(barCtx, {
+            type: 'bar',
+            data: {
+              labels: ['Current Overview'],
+              datasets: [
+                { label: 'Approved', data: [appr || 12], backgroundColor: '#059669', borderRadius: 4 },
+                { label: 'Pending',  data: [pend || 5], backgroundColor: '#D97706', borderRadius: 4 },
+                { label: 'Rejected', data: [rej || 2], backgroundColor: '#DC2626', borderRadius: 4 }
+              ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display:false } }, y: { grid: { borderDash:[4,4] }, beginAtZero:true } }, plugins: { legend: { position:'top' } } }
+          });
+        }
+    
+
+    const lineCtx = document.getElementById('riskLevelChart')?.getContext('2d');
+    if(lineCtx) {
+      new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: ['Jan','Feb','Mar','Apr'],
+          datasets: [
+            { label:'Claim Volume', data:[25,32,28,45], borderColor:'#059669', backgroundColor:'rgba(5,150,105,0.08)', tension:0.4, fill:true }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid:{display:false} }, y: { grid:{borderDash:[4,4]} } }, plugins: { legend:{position:'top'} } }
+      });
+    }
+
+    if(window.lucide) lucide.createIcons();
+  });
+</script>
+</body>
+</html>

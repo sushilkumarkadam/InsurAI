@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications – InsurAI Employee</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header"><h1>Notifications</h1><p>Policy reminders, claim updates, and announcements</p></div>
+  <div class="card" style="padding:0;overflow:hidden;" id="empNotifList">
+    <div style="padding:40px;text-align:center;color:var(--gray-400);">Loading notifications...</div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('employee', window.location.pathname);
+    requireAuth(['EMPLOYEE']);
+    
+    await loadNotifications();
+  });
+
+  async function loadNotifications() {
+    try {
+        const notifications = await apiRequest('/notifications', { method: 'GET' });
+        const list = document.getElementById('empNotifList');
+        list.innerHTML = '';
+        
+        if(!notifications || notifications.length === 0) {
+            list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray-400);">No notifications found.</div>';
+            return;
+        }
+
+        notifications.forEach(n => {
+            const div = document.createElement('div');
+            div.className = `notif-item ${!n.isRead ? 'unread' : ''}`;
+            div.onclick = () => markRead(n.id);
+            
+            let icon = 'bell';
+            let bg = '#EFF6FF';
+            let color = 'var(--blue-light)';
+
+            if(n.message.toLowerCase().includes('fraud')) { icon = 'shield-alert'; bg = 'var(--red-bg)'; color = 'var(--red)'; }
+            if(n.message.toLowerCase().includes('approved')) { icon = 'check-circle'; bg = '#F0FDFA'; color = 'var(--teal)'; }
+            if(n.message.toLowerCase().includes('expire')) { icon = 'calendar'; bg = 'var(--amber-bg)'; color = 'var(--amber)'; }
+
+            const date = new Date(n.dateSent).toLocaleString();
+
+            div.innerHTML = `
+                <div class="notif-icon" style="background:${bg};"><i data-lucide="${icon}" style="color:${color};"></i></div>
+                <div class="notif-body">
+                    <strong>Notification</strong>
+                    <p>${n.message}</p>
+                    <span class="notif-meta">${date}</span>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+        
+        if(window.lucide) lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Failed to load notifications', err);
+        document.getElementById('empNotifList').innerHTML = '<div style="padding:40px;text-align:center;color:red;">Failed to load notifications</div>';
+    }
+  }
+
+  async function markRead(id) {
+    try {
+        await apiRequest(`/notifications/${id}/read`, { method: 'PUT' });
+        loadNotifications();
+    } catch(err) {
+        console.error('Failed to mark as read', err);
+    }
+  }
+</script>
+</body></html>

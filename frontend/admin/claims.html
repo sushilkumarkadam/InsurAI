@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claims Management – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Claims Management</h1><p>Track, review, and manage all insurance claims</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline"><i data-lucide="download"></i> Export CSV</button>
+      <button class="btn btn-primary"><i data-lucide="plus"></i> New Claim</button>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-search"><i data-lucide="search"></i><input type="text" id="searchFilter" placeholder="Search claim ID, employee, type…" onkeyup="loadClaims()"></div>
+    <select class="filter-select" id="statusFilter" onchange="loadClaims()"><option value="">All Status</option><option value="PENDING">Pending</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option></select>
+    <select class="filter-select" id="typeFilter" onchange="loadClaims()"><option value="">All Types</option><option value="Health">Health</option><option value="Auto">Auto</option><option value="Life">Life</option><option value="Property">Property</option></select>
+    <input type="date" class="filter-select" id="dateFilter" onchange="loadClaims()">
+    <button class="btn btn-outline btn-sm" onclick="loadClaims()"><i data-lucide="filter"></i> Filters</button>
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+    <div class="stat-card blue"><div class="stat-icon blue"><i data-lucide="alert-circle"></i></div><div class="stat-label">Total Claims</div><div class="stat-value" id="statTotalClaims" style="font-size:22px;">...</div></div>
+    <div class="stat-card amber"><div class="stat-icon amber"><i data-lucide="clock"></i></div><div class="stat-label">Pending</div><div class="stat-value" id="statPendingClaims" style="font-size:22px;">...</div></div>
+    <div class="stat-card green"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div class="stat-label">Approved</div><div class="stat-value" id="statApprovedClaims" style="font-size:22px;">...</div></div>
+    <div class="stat-card red"><div class="stat-icon red"><i data-lucide="x-circle"></i></div><div class="stat-label">Rejected</div><div class="stat-value" id="statRejectedClaims" style="font-size:22px;">...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i data-lucide="alert-circle" style="width:16px;height:16px;color:var(--teal);"></i> All Claims</div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Claim ID</th><th>Employee</th><th>Policy</th><th>Type</th><th>Amount Claimed</th><th>Filed Date</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="adminClaimsTableBody">
+          <tr><td colspan="9" style="text-align:center;">Loading claims...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span>Showing 1–7 of 548 claims</span>
+      <div class="page-btns">
+        <button class="page-btn"><i data-lucide="chevron-left" style="width:14px;height:14px;"></i></button>
+        <button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button>
+        <button class="page-btn"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('admin', window.location.pathname);
+    requireAuth(['ADMIN']);
+    
+    await loadClaims();
+  });
+
+  async function loadClaims() {
+    try {
+        const status = document.getElementById('statusFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        const search = document.getElementById('searchFilter').value.toLowerCase();
+        
+        let qs = '';
+        if (status) qs += `?status=${status}`;
+        if (type) qs += qs ? `&type=${type}` : `?type=${type}`;
+
+        let claims = await apiRequest(`/claims/all${qs}`, { method: 'GET' });
+        
+        if (search && claims) {
+            claims = claims.filter(c => 
+                (c.id && c.id.toString().includes(search)) || 
+                (c.username && c.username.toLowerCase().includes(search)) || 
+                (c.claimType && c.claimType.toLowerCase().includes(search)) ||
+                (c.policyTitle && c.policyTitle.toLowerCase().includes(search))
+            );
+        }
+        const tbody = document.getElementById('adminClaimsTableBody');
+        tbody.innerHTML = '';
+        
+        let total = 0, pending = 0, approved = 0, rejected = 0;
+
+        if(!claims || claims.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No claims found.</td></tr>';
+        } else {
+            claims.forEach(c => {
+                total++;
+                if(c.status === 'PENDING') pending++;
+                else if(c.status === 'APPROVED') approved++;
+                else if(c.status === 'REJECTED') rejected++;
+
+                const tr = document.createElement('tr');
+                
+                let badgeClass = 'badge-amber';
+                if(c.status === 'APPROVED') badgeClass = 'badge-green';
+                if(c.status === 'REJECTED') badgeClass = 'badge-red';
+                if(c.status === 'FRAUD_ALERT') badgeClass = 'badge-red';
+
+                const statusLabel = c.status || 'PENDING';
+                
+                tr.innerHTML = `
+                    <td><strong>${c.id || c.claimId || '-'}</strong></td>
+                    <td>${c.username || (c.user ? c.user.username : '-')}</td>
+                    <td>${c.policyTitle || (c.policy ? c.policy.title : '-')}</td>
+                    <td>${c.claimType || (c.policy ? c.policy.type : '-')}</td>
+                    <td>₹${c.amount.toLocaleString()}</td>
+                    <td>${new Date(c.submitDate || c.createdAt || Date.now()).toLocaleDateString()}</td>
+                    <td><span class="badge ${c.riskScore > 70 ? 'badge-red' : 'badge-gray'}">${c.riskScore > 70 ? 'High' : 'Normal'}</span></td>
+                    <td><span class="badge ${badgeClass} badge-dot">${statusLabel}</span></td>
+                    <td>
+                        <div style="display:flex;gap:4px;">
+                            ${c.status === 'PENDING' ? `
+                                <button class="btn btn-primary btn-sm" onclick="updateStatus(${c.id}, 'APPROVED')">Approve</button>
+                                <button class="btn btn-danger btn-sm" onclick="updateStatus(${c.id}, 'REJECTED')">Reject</button>
+                            ` : `
+                                <button class="btn btn-outline btn-sm" onclick="viewDetails(${c.id})">View</button>
+                            `}
+                            <button class="btn btn-danger btn-sm" onclick="deleteClaim(${c.id})"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Update stats
+        document.getElementById('statTotalClaims').textContent = total;
+        document.getElementById('statPendingClaims').textContent = pending;
+        document.getElementById('statApprovedClaims').textContent = approved;
+        document.getElementById('statRejectedClaims').textContent = rejected;
+        
+    } catch (err) {
+        console.error('Failed to load claims', err);
+        document.getElementById('adminClaimsTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">Failed to load claims</td></tr>';
+    }
+  }
+
+  async function updateStatus(id, status) {
+    if(!confirm(`Are you sure you want to mark this claim as ${status}?`)) return;
+      try {
+          await apiRequest(`/claims/${id}/status?status=${status}`, { method: 'PUT' });
+          showToast('Claim status updated', 'success');
+          loadClaims();
+      } catch (err) {
+          showToast('Failed to update status: ' + err.message, 'error');
+      }
+  }
+
+  async function deleteClaim(id) {
+      if(!confirm(`Are you sure you want to completely delete claim #${id}? This cannot be undone.`)) return;
+      try {
+          await apiRequest(`/claims/${id}`, { method: 'DELETE' });
+          showToast('Claim deleted successfully', 'success');
+          loadClaims();
+      } catch (err) {
+          showToast('Failed to delete claim: ' + err.message, 'error');
+      }
+  }
+</script>
+</body></html>

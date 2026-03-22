@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Policies – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Policies Management</h1><p>Manage all corporate insurance policies across departments</p></div>
+    <div style="display:flex;gap:8px;">
+      <a href="add-policy.html" class="btn btn-primary"><i data-lucide="plus"></i> Add Policy</a>
+      <button class="btn btn-outline"><i data-lucide="download"></i> Export</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="filter-search"><i data-lucide="search"></i><input type="text" id="searchFilter" placeholder="Search by policy ID, title, assigned…" onkeyup="loadPolicies()"></div>
+    <select class="filter-select" id="typeFilter" onchange="loadPolicies()"><option value="">All Types</option><option value="Health Insurance">Health</option><option value="Life Insurance">Life</option><option value="Auto Insurance">Auto</option><option value="Property Insurance">Property</option></select>
+    <select class="filter-select" id="statusFilter" onchange="loadPolicies()"><option value="">All Status</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option><option value="EXPIRED">Expired</option></select>
+    <button class="btn btn-outline btn-sm" onclick="loadPolicies()"><i data-lucide="filter"></i> Filters</button>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+    <div class="stat-card blue"><div class="stat-icon blue"><i data-lucide="file-text"></i></div><div class="stat-label">Total</div><div class="stat-value" id="statTotalPolicies" style="font-size:22px;">...</div></div>
+    <div class="stat-card green"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div class="stat-label">Active</div><div class="stat-value" id="statActivePolicies" style="font-size:22px;">...</div></div>
+    <div class="stat-card amber"><div class="stat-icon amber"><i data-lucide="clock"></i></div><div class="stat-label">Expiring Soon</div><div class="stat-value" id="statExpiringPolicies" style="font-size:22px;">...</div></div>
+    <div class="stat-card red"><div class="stat-icon red"><i data-lucide="x-circle"></i></div><div class="stat-label">Expired</div><div class="stat-value" id="statExpiredPolicies" style="font-size:22px;">...</div></div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-title-row">
+      <span class="card-title"><i data-lucide="file-text" style="width:16px;height:16px;color:var(--blue-light);"></i> All Policies</span>
+      <span id="policyCountInfo" style="font-size:13px;color:var(--gray-500);">Loading...</span>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Assigned</th><th>Coverage</th><th>Premium</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="policiesTableBody">
+          <tr><td colspan="9" style="text-align:center;">Loading policies...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span id="paginationInfo">Showing 0–0 of 0 policies</span>
+      <div class="page-btns">
+        <button class="page-btn"><i data-lucide="chevron-left" style="width:14px;height:14px;"></i></button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('admin', window.location.pathname);
+    requireAuth(['ADMIN']);
+    
+    await loadPolicies();
+  });
+
+  async function loadPolicies() {
+    try {
+        const status = document.getElementById('statusFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        const search = document.getElementById('searchFilter').value.toLowerCase();
+
+        let qs = '';
+        if (status) qs += `?status=${status}`;
+        if (type) qs += qs ? `&type=${type}` : `?type=${type}`;
+
+        let policies = await apiRequest(`/policies${qs}`, { method: 'GET' });
+        
+        if (search && policies) {
+            policies = policies.filter(p => 
+                (p.policyNumber && p.policyNumber.toLowerCase().includes(search)) || 
+                (p.title && p.title.toLowerCase().includes(search)) || 
+                (p.assignedUsername && p.assignedUsername.toLowerCase().includes(search))
+            );
+        }
+        
+        const tbody = document.getElementById('policiesTableBody');
+        tbody.innerHTML = '';
+        
+        let total = 0, active = 0, expiring = 0, expired = 0;
+
+        if(!policies || policies.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No policies found.</td></tr>';
+            document.getElementById('policyCountInfo').textContent = 'Showing 0 policies';
+        } else {
+            policies.forEach(p => {
+                total++;
+                if(p.status === 'ACTIVE') active++;
+                else if(p.status === 'EXPIRED') expired++;
+                else if(p.status === 'EXPIRING') expiring++;
+
+                let badgeClass = p.status === 'ACTIVE' ? 'badge-green' : (p.status === 'EXPIRED' ? 'badge-red' : 'badge-gray');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${p.policyNumber || p.id}</strong></td>
+                    <td>${p.title || '-'}</td>
+                    <td>${p.type}</td>
+                    <td>${p.assignedUsername ? p.assignedUsername : '<span style="color:#aaa;">Unassigned</span>'}</td>
+                    <td>₹${p.coverageAmount ? p.coverageAmount.toLocaleString() : '-'}</td>
+                    <td>₹${p.premium ? p.premium.toLocaleString() : '-'}</td>
+                    <td><span class="badge ${badgeClass} badge-dot">${p.status}</span></td>
+                    <td>
+                        <div style="display:flex;gap:4px;">
+                            ${p.status === 'ACTIVE' ? 
+                                `<button class="btn btn-outline btn-sm" onclick="toggleStatus(${p.id}, 'INACTIVE')">Deactivate</button>` : 
+                                `<button class="btn btn-outline btn-sm" onclick="toggleStatus(${p.id}, 'ACTIVE')">Activate</button>`}
+                            <button class="btn btn-ghost btn-sm" onclick="deletePolicy(${p.id})"><i data-lucide="trash-2" style="color:var(--red);"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('policyCountInfo').textContent = `Showing 1–${policies.length} of ${policies.length}`;
+            document.getElementById('paginationInfo').textContent = `Showing 1–${policies.length} of ${policies.length} policies`;
+        }
+
+        // Update stats
+        document.getElementById('statTotalPolicies').textContent = total;
+        document.getElementById('statActivePolicies').textContent = active;
+        document.getElementById('statExpiringPolicies').textContent = expiring;
+        document.getElementById('statExpiredPolicies').textContent = expired;
+        
+        // Re-init lucide icons for dynamic content
+        if(window.lucide) lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Failed to load policies', err);
+        document.getElementById('policiesTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Failed to load policies</td></tr>';
+    }
+  }
+
+  async function toggleStatus(id, status) {
+      if(!confirm(`Are you sure you want to mark this policy as ${status}?`)) return;
+      try {
+          await apiRequest(`/policies/${id}/status?status=${status}`, { method: 'PATCH' });
+          showToast(`Policy marked as ${status}`, 'success');
+          loadPolicies();
+      } catch(e) {
+          showToast(e.message || 'Failed to update policy status', 'error');
+      }
+  }
+  async function deletePolicy(id) { 
+      if(!confirm('Are you sure you want to delete this policy?')) return;
+      try {
+          await apiRequest('/policies/' + id, { method: 'DELETE' });
+          showToast('Policy deleted successfully', 'success');
+          loadPolicies();
+      } catch(e) {
+          showToast(e.message || 'Failed to delete policy', 'error');
+      }
+  }
+</script>
+</body></html>

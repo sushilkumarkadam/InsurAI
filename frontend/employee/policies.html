@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Policies – InsurAI Employee</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header"><h1>My Policies</h1><p>All your active and past insurance policies</p></div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="table-wrapper" style="border:none;">
+      <table>
+        <thead><tr><th>Policy ID</th><th>Type</th><th>Coverage</th><th>Premium</th><th>Expiry</th><th>Provider</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="empPoliciesTableBody">
+          <tr><td colspan="8" style="text-align:center;">Loading your policies...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="background:linear-gradient(90deg,#EFF6FF,#F0FDFA);border-color:var(--blue-light);">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div><strong style="color:var(--navy);">Need a new policy?</strong><p style="font-size:13px;color:var(--gray-500);margin:4px 0 0;">Contact your HR department or admin to have a new policy issued for you.</p></div>
+      <a href="submit-claim.html" class="btn btn-primary"><i data-lucide="send"></i> Submit a Claim</a>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('employee', window.location.pathname);
+    requireAuth(['EMPLOYEE']);
+    
+    await loadMyPolicies();
+  });
+
+  async function loadMyPolicies() {
+    try {
+        const policies = await apiRequest('/policies/my', { method: 'GET' });
+        const tbody = document.getElementById('empPoliciesTableBody');
+        tbody.innerHTML = '';
+        
+        if(!policies || policies.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">You have no active or past policies.</td></tr>';
+            return;
+        }
+
+        policies.forEach(p => {
+            const tr = document.createElement('tr');
+            
+            let badgeClass = 'badge-green';
+            if(p.status === 'EXPIRED') badgeClass = 'badge-red';
+            if(p.status === 'EXPIRING') badgeClass = 'badge-amber';
+
+            const expiry = p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'N/A';
+
+            tr.innerHTML = `
+                <td><strong>${p.policyNumber || 'POL-' + p.id}</strong></td>
+                <td>${p.type}</td>
+                <td>₹${(p.coverageAmount || 0).toLocaleString()}</td>
+                <td>₹${(p.premium || 0).toLocaleString()}/mo</td>
+                <td>${expiry}</td>
+                <td>Provider</td>
+                <td><span class="badge ${badgeClass} badge-dot">${p.status || 'Active'}</span></td>
+                <td>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-ghost btn-sm" onclick="alert('Viewing policy ' + ${p.id})"><i data-lucide="eye"></i></button>
+                        <button class="btn btn-ghost btn-sm" onclick="alert('Downloading certificate for ' + ${p.id})"><i data-lucide="download"></i></button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        if(window.lucide) lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Failed to load policies', err);
+        document.getElementById('empPoliciesTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Failed to load policies</td></tr>';
+    }
+  }
+</script>
+</body></html>

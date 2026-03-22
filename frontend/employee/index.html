@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Dashboard – InsurAI</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div>
+      <div style="font-size:13px;color:var(--gray-500);margin-bottom:4px;">Welcome back 👋</div>
+      <h1 id="employeeWelcomeName">Hello, User</h1>
+      <p>Your insurance self-service portal</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="submit-claim.html" class="btn btn-primary"><i data-lucide="send"></i> Submit Claim</a>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card blue"><div class="stat-icon blue"><i data-lucide="file-text"></i></div><div class="stat-label">Available Policies</div><div class="stat-value" id="empStatPolicies" style="font-size:22px;">...</div><span class="stat-trend up">Total Available</span></div>
+    <div class="stat-card amber"><div class="stat-icon amber"><i data-lucide="alert-circle"></i></div><div class="stat-label">Claims Filed</div><div class="stat-value" id="empStatClaims" style="font-size:22px;">...</div><span class="stat-trend up">Lifetime</span></div>
+    <div class="stat-card green"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div class="stat-label">Claims Settled</div><div class="stat-value" id="empStatSettled" style="font-size:22px;">...</div><span class="stat-trend up" id="empStatPaid">Approved</span></div>
+    <div class="stat-card teal"><div class="stat-icon teal"><i data-lucide="bell"></i></div><div class="stat-label">Notifications</div><div class="stat-value" id="empStatNotifs" style="font-size:22px;">...</div><span class="stat-trend up">Unread</span></div>
+  </div>
+
+  <div class="grid-2">
+    <!-- My Active Policies -->
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="file-text" style="width:16px;height:16px;color:var(--blue-light);"></i> Available Policies</span>
+        <a href="policies.html" class="btn btn-outline btn-sm">View All</a>
+      </div>
+      <div id="empPolicyList" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="padding:40px;text-align:center;color:var(--gray-400);">Loading policies...</div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <!-- Claim Status -->
+      <div class="card">
+        <div class="card-title-row">
+          <span class="card-title"><i data-lucide="alert-circle" style="width:16px;height:16px;color:var(--teal);"></i> My Claims</span>
+          <a href="track-claims.html" class="btn btn-outline btn-sm">Track All</a>
+        </div>
+        <div id="empClaimList" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="padding:20px;text-align:center;color:var(--gray-400);">Loading claims...</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <a href="submit-claim.html" class="quick-action-btn"><i data-lucide="send"></i> Submit Claim</a>
+          <a href="track-claims.html" class="quick-action-btn"><i data-lucide="search"></i> Track Claim</a>
+          <a href="policies.html" class="quick-action-btn"><i data-lucide="file-text"></i> My Policies</a>
+          <a href="notifications.html" class="quick-action-btn"><i data-lucide="bell"></i> Notifications</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('employee', window.location.pathname);
+    // Allow ADMIN and STAFF too, so they can test the employee view
+    requireAuth(['EMPLOYEE', 'ADMIN', 'STAFF']);
+
+    try {
+        const uStr = localStorage.getItem('user');
+        if(uStr) {
+            const user = JSON.parse(uStr);
+            document.getElementById('employeeWelcomeName').textContent = 'Hello, ' + (user.username || 'User') + ' 👋';
+        }
+    } catch(e) {}
+
+    await Promise.all([
+        loadStats(),
+        loadRecentPolicies(),
+        loadRecentClaims()
+    ]);
+  });
+
+  async function loadStats() {
+    try {
+        const stats = await apiRequest('/dashboard/employee', { method: 'GET' });
+        if(stats) {
+            document.getElementById('empStatPolicies').textContent = (stats.totalPolicies || 0);
+            document.getElementById('empStatClaims').textContent = (stats.totalClaims || 0);
+            document.getElementById('empStatSettled').textContent = (stats.approvedClaims || 0);
+        }
+
+        // Get unread notification count
+        try {
+            const notifs = await apiRequest('/notifications', { method: 'GET' });
+            if(notifs && Array.isArray(notifs)) {
+                const unread = notifs.filter(n => !n.isRead && !n.read).length;
+                document.getElementById('empStatNotifs').textContent = unread;
+            } else {
+                document.getElementById('empStatNotifs').textContent = 0;
+            }
+        } catch(e) {
+            document.getElementById('empStatNotifs').textContent = 0;
+        }
+    } catch(err) {
+        console.error('Failed to load stats', err);
+        ['empStatPolicies', 'empStatClaims', 'empStatSettled', 'empStatNotifs'].forEach(id => {
+            document.getElementById(id).textContent = '–';
+        });
+    }
+  }
+
+  async function loadRecentPolicies() {
+    try {
+        const policies = await apiRequest('/policies/my', { method: 'GET' });
+        const list = document.getElementById('empPolicyList');
+        list.innerHTML = '';
+
+        if(!policies || policies.length === 0) {
+            list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray-400);">No policies available.</div>';
+            return;
+        }
+
+        const colors = ['var(--blue-light)', 'var(--teal)', 'var(--indigo)', 'var(--purple)'];
+
+        policies.slice(0, 3).forEach((p, idx) => {
+            const div = document.createElement('div');
+            div.style = `padding:14px;background:var(--gray-50);border-radius:var(--r-md);border:1px solid var(--gray-200);border-left:3px solid ${colors[idx % colors.length]};`;
+
+            // Use expiryDate if present; gracefully degrade
+            const expiry = p.expiryDate
+                ? new Date(p.expiryDate).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})
+                : 'Ongoing';
+            const pStatus = p.status || 'ACTIVE';
+            const statusBadge = pStatus === 'ACTIVE' ? 'badge-green' : pStatus === 'EXPIRED' ? 'badge-red' : 'badge-gray';
+
+            div.innerHTML = `
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                  <strong>${p.policyNumber || 'POL-' + p.id} – ${p.type || 'Policy'}</strong>
+                  <span class="badge ${statusBadge}">${pStatus}</span>
+                </div>
+                <div style="font-size:12.5px;color:var(--gray-500);">
+                  ${p.title || ''} · Coverage: ₹${(p.coverageAmount || 0).toLocaleString()} · Premium: ₹${(p.premium || 0).toLocaleString()}/mo
+                </div>
+                <div style="font-size:12px;color:var(--gray-400);margin-top:3px;">Expires: ${expiry}</div>
+                <div style="margin-top:8px;display:flex;gap:8px;">
+                    <a href="submit-claim.html?policyId=${p.id}" class="btn btn-ghost btn-sm"><i data-lucide="send"></i> File Claim</a>
+                    <a href="policies.html" class="btn btn-ghost btn-sm"><i data-lucide="eye"></i> Details</a>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+        if(window.lucide) lucide.createIcons();
+    } catch(err) {
+        console.error('Failed to load policies', err);
+        document.getElementById('empPolicyList').innerHTML =
+          '<div style="padding:20px;text-align:center;color:var(--gray-400);">Could not load policies.</div>';
+    }
+  }
+
+  async function loadRecentClaims() {
+    try {
+        const claims = await apiRequest('/claims/my', { method: 'GET' });
+        const list = document.getElementById('empClaimList');
+        list.innerHTML = '';
+
+        if(!claims || claims.length === 0) {
+            list.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray-400);">No claims filed yet. <a href="submit-claim.html" style="color:var(--blue-light);">Submit your first claim →</a></div>';
+            return;
+        }
+
+        // Sort by most recent first
+        const sorted = [...claims].sort((a, b) => new Date(b.dateSubmitted||0) - new Date(a.dateSubmitted||0));
+
+        sorted.slice(0, 5).forEach(c => {
+            const div = document.createElement('div');
+            div.style = 'display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--gray-50);border-radius:var(--r-md);';
+
+            let badgeClass = 'badge-amber';
+            if(c.status === 'APPROVED') badgeClass = 'badge-green';
+            if(c.status === 'REJECTED') badgeClass = 'badge-red';
+
+            const date = c.dateSubmitted
+                ? new Date(c.dateSubmitted).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})
+                : '—';
+            const policyLabel = c.policyNumber || (c.policyId ? 'Policy #' + c.policyId : 'Claim');
+
+            div.innerHTML = `
+                <div>
+                  <strong style="font-size:13.5px;">CLM-${c.id}</strong>
+                  <div style="font-size:12px;color:var(--gray-500);">${policyLabel} · ₹${(c.amount || 0).toLocaleString()} · ${date}</div>
+                </div>
+                <span class="badge ${badgeClass} badge-dot">${c.status}</span>
+            `;
+            list.appendChild(div);
+        });
+    } catch(err) {
+        console.error('Failed to load claims', err);
+        document.getElementById('empClaimList').innerHTML =
+          '<div style="padding:10px;text-align:center;color:var(--gray-400);">Could not load claims.</div>';
+    }
+  }
+</script>
+</body></html>

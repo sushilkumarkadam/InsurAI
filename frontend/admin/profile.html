@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header"><h1>My Profile</h1><p>Manage your account information and preferences</p></div>
+
+  <div class="grid-12">
+    <!-- Profile Card -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="profile-cover"></div>
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar">JD</div>
+          <div class="profile-info" style="padding-bottom:4px;">
+            <h2>John Doe</h2>
+            <span>Administrator · InsurAI Platform</span>
+          </div>
+        </div>
+        <div style="padding:0 24px 20px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div style="padding:10px;background:var(--gray-50);border-radius:var(--r-md);text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:var(--navy);">5</div>
+              <div style="font-size:11px;color:var(--gray-500);">Years Active</div>
+            </div>
+            <div style="padding:10px;background:var(--gray-50);border-radius:var(--r-md);text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:var(--navy);">1,240</div>
+              <div style="font-size:11px;color:var(--gray-500);">Policies Managed</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px;">
+            <div style="display:flex;gap:8px;align-items:center;color:var(--gray-600);"><i data-lucide="mail" style="width:15px;height:15px;"></i> john.doe@company.com</div>
+            <div style="display:flex;gap:8px;align-items:center;color:var(--gray-600);"><i data-lucide="phone" style="width:15px;height:15px;"></i> +91 98765 43210</div>
+            <div style="display:flex;gap:8px;align-items:center;color:var(--gray-600);"><i data-lucide="building" style="width:15px;height:15px;"></i> Head Office, Mumbai</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Access</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <a href="settings.html" class="btn btn-outline btn-sm" style="justify-content:flex-start;"><i data-lucide="settings"></i> Platform Settings</a>
+          <a href="#" class="btn btn-outline btn-sm" style="justify-content:flex-start;"><i data-lucide="key"></i> Change Password</a>
+          <a href="#" class="btn btn-outline btn-sm" style="justify-content:flex-start;"><i data-lucide="shield"></i> Security Logs</a>
+          <a href="../index.html" class="btn btn-outline btn-sm" style="justify-content:flex-start;color:var(--red);"><i data-lucide="log-out"></i> Sign Out</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Profile -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-title"><i data-lucide="user" style="width:16px;height:16px;color:var(--blue-light);"></i> Personal Information</div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Username</label><input type="text" id="profUser" class="form-control" value=""></div>
+          <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" id="profPhone" class="form-control" value=""></div>
+        </div>
+        <div class="form-group"><label class="form-label">Work Email</label><input type="email" id="profEmail" class="form-control" value=""></div>
+        <div class="form-group"><label class="form-label">Department</label><input type="text" id="profDept" class="form-control" value=""></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="saveProfile()"><i data-lucide="save"></i> Save Changes</button>
+        </div>
+      </div>
+
+      <!-- Audit Activity -->
+      <div class="card">
+        <div class="card-title"><i data-lucide="activity" style="width:16px;height:16px;color:var(--indigo);"></i> Recent Account Activity</div>
+        <div class="activity-feed">
+          <div class="activity-item">
+            <div class="activity-dot blue"></div>
+            <div class="activity-content"><strong>Login – Chrome, Windows</strong><span>Mumbai · 103.21.xx.xx</span></div>
+            <span class="activity-time">Today 2:30 PM</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot green"></div>
+            <div class="activity-content"><strong>Policy added – POL-1240</strong><span>Health policy for Arjun Mehta</span></div>
+            <span class="activity-time">Today 11:20 AM</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot amber"></div>
+            <div class="activity-content"><strong>User role changed</strong><span>James Wilson promoted to Staff</span></div>
+            <span class="activity-time">Yesterday 4:15 PM</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot green"></div>
+            <div class="activity-content"><strong>Report generated</strong><span>Q1 2026 Executive Summary</span></div>
+            <span class="activity-time">Yesterday 9:00 AM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  let currentUserProfile = null;
+  document.addEventListener('DOMContentLoaded', async () => {
+      initLayout('admin', window.location.pathname);
+      requireAuth(['ADMIN']);
+      
+      try {
+          const u = await apiRequest('/users/me', {method:'GET'});
+          if(u) {
+              currentUserProfile = u;
+              document.querySelector('.profile-info h2').textContent = u.username;
+              document.querySelector('.profile-avatar').textContent = u.username.substring(0,2).toUpperCase();
+              
+              document.getElementById('profUser').value = u.username || '';
+              document.getElementById('profPhone').value = u.phone || '';
+              document.getElementById('profEmail').value = u.email || '';
+              document.getElementById('profDept').value = u.department || '';
+          }
+      } catch(e) {
+          console.error("Profile load failed", e);
+      }
+  });
+
+  async function saveProfile() {
+      if(!currentUserProfile) return;
+      const payload = {
+          ...currentUserProfile,
+          username: document.getElementById('profUser').value,
+          phone: document.getElementById('profPhone').value,
+          email: document.getElementById('profEmail').value,
+          department: document.getElementById('profDept').value
+      };
+      
+      try {
+          await apiRequest(`/users/${currentUserProfile.id}`, {
+              method: 'PUT',
+              body: JSON.stringify(payload)
+          });
+          showToast('Profile updated successfully!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
+      } catch(e) {
+          showToast(e.message || 'Failed to update profile', 'error');
+      }
+  }
+</script>
+</body></html>

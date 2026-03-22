@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Risk Analysis – InsurAI Admin</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+  <script src="../assets/js/chart.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Risk Analysis</h1><p>AI-driven risk scoring and department-level risk overview</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline"><i data-lucide="refresh-cw"></i> Refresh Scores</button>
+      <button class="btn btn-primary"><i data-lucide="bar-chart-2"></i> Generate Report</button>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+    <div class="stat-card green"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div class="stat-label">Low Risk Policies</div><div class="stat-value" style="font-size:22px;">892</div><span class="stat-trend up">72% of portfolio</span></div>
+    <div class="stat-card amber"><div class="stat-icon amber"><i data-lucide="alert-triangle"></i></div><div class="stat-label">Medium Risk</div><div class="stat-value" style="font-size:22px;">278</div><span class="stat-trend up">22% of portfolio</span></div>
+    <div class="stat-card red"><div class="stat-icon red"><i data-lucide="trending-up"></i></div><div class="stat-label">High Risk</div><div class="stat-value" style="font-size:22px;">70</div><span class="stat-trend down">6% — above target</span></div>
+    <div class="stat-card blue"><div class="stat-icon blue"><i data-lucide="brain"></i></div><div class="stat-label">Avg Risk Score</div><div class="stat-value" style="font-size:22px;">2.4</div><span class="stat-trend up">Out of 10</span></div>
+  </div>
+
+  <div class="grid-2 mb-16">
+    <div class="card">
+      <div class="card-title"><i data-lucide="activity" style="width:16px;height:16px;color:var(--indigo);"></i> Risk Score Trend</div>
+      <div class="chart-wrap"><canvas id="riskTrendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i data-lucide="pie-chart" style="width:16px;height:16px;color:var(--teal);"></i> Risk by Category</div>
+      <div class="chart-wrap"><canvas id="riskCatChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Department Risk Overview -->
+  <div class="card">
+    <div class="card-title"><i data-lucide="building" style="width:16px;height:16px;color:var(--blue-light);"></i> Department Risk Overview</div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Department</th><th>Employees</th><th>Active Policies</th><th>Avg Risk Score</th><th>High Risk Count</th><th>Trend</th><th>Risk Level</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Engineering</strong></td><td>142</td><td>138</td><td>1.8</td><td>4</td><td style="color:var(--green);">↓ Improving</td><td><span class="badge badge-green">Low</span></td></tr>
+          <tr><td><strong>Operations</strong></td><td>98</td><td>96</td><td>4.2</td><td>18</td><td style="color:var(--red);">↑ Rising</td><td><span class="badge badge-red">High</span></td></tr>
+          <tr><td><strong>Finance</strong></td><td>64</td><td>63</td><td>2.1</td><td>3</td><td style="color:var(--green);">↓ Stable</td><td><span class="badge badge-green">Low</span></td></tr>
+          <tr><td><strong>Sales</strong></td><td>87</td><td>85</td><td>3.4</td><td>12</td><td style="color:var(--amber);">→ Stable</td><td><span class="badge badge-amber">Medium</span></td></tr>
+          <tr><td><strong>HR</strong></td><td>31</td><td>31</td><td>1.2</td><td>0</td><td style="color:var(--green);">↓ Low</td><td><span class="badge badge-green">Low</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initLayout('admin', window.location.pathname);
+    new Chart(document.getElementById('riskTrendChart').getContext('2d'), {
+      type:'line', data:{ labels:['Oct','Nov','Dec','Jan','Feb','Mar'],
+        datasets:[
+          {label:'Avg Risk Score',data:[3.1,2.8,2.6,2.5,2.4,2.4],borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,0.08)',tension:0.4,fill:true},
+          {label:'High Risk Count',data:[28,24,22,26,21,23],borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,0.05)',tension:0.4}
+        ]
+      }, options:{responsive:true,maintainAspectRatio:false,scales:{x:{grid:{display:false}},y:{grid:{borderDash:[4,4]}}}}
+    });
+    new Chart(document.getElementById('riskCatChart').getContext('2d'), {
+      type:'doughnut', data:{
+        labels:['Health','Auto','Life','Property'],
+        datasets:[{data:[45,30,15,10],backgroundColor:['#2563EB','#D97706','#0D9488','#4F46E5'],borderWidth:3,borderColor:'#fff'}]
+      }, options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right'}}}
+    });
+  });
+</script>
+</body></html>

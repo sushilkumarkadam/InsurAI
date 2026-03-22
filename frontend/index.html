@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InsurAI – Corporate Policy Automation and Intelligence System</title>
+  <meta name="description" content="InsurAI is the enterprise AI insurance platform for policy automation, intelligent claims processing, fraud detection, and risk analysis.">
+  <link rel="stylesheet" href="assets/css/design.css">
+  <script src="assets/js/lucide.min.js"></script>
+</head>
+<body style="background:var(--white);">
+
+<!-- NAVBAR -->
+<nav class="landing-nav">
+  <div class="landing-nav-inner">
+    <div class="nav-logo">
+      <div class="nav-logo-icon"><i data-lucide="shield"></i></div>
+      <span>InsurAI</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#roles">Role Solutions</a>
+      <a href="#security">Security</a>
+      <a href="#how">How It Works</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-ghost" onclick="openModal('loginModal')">Login</button>
+      <button class="btn btn-primary" onclick="openModal('signupModal')">Get Started</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge"><i data-lucide="sparkles"></i> AI-Powered · Enterprise Grade</div>
+      <h1>Intelligent Corporate <span>Insurance Automation</span></h1>
+      <p>Automate policy management, detect fraud in real-time, and streamline claims with a unified AI platform built for modern enterprises.</p>
+      <div class="hero-btns">
+        <button class="hero-btn-primary" onclick="openModal('signupModal')">Start Free Trial</button>
+        <button class="hero-btn-secondary" onclick="openModal('loginModal')">Sign In to Portal</button>
+      </div>
+      <div style="display:flex;gap:24px;margin-top:32px;">
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:800;color:white;">500+</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);">Companies</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:800;color:white;">1M+</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);">Policies Managed</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:800;color:white;">99%</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);">Fraud Accuracy</div>
+        </div>
+      </div>
+    </div>
+    <!-- Dashboard Preview -->
+    <div class="hero-preview">
+      <div class="preview-header">
+        <div class="preview-dot" style="background:#ef4444;"></div>
+        <div class="preview-dot" style="background:#f59e0b;"></div>
+        <div class="preview-dot" style="background:#22c55e;"></div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:8px;">InsurAI Admin Dashboard</span>
+      </div>
+      <div class="preview-stat-row">
+        <div class="preview-stat">
+          <div class="label">Active Policies</div>
+          <div class="value">2,847</div>
+          <div class="trend">↑ +12% this month</div>
+        </div>
+        <div class="preview-stat">
+          <div class="label">Claims Pending</div>
+          <div class="value">143</div>
+          <div class="trend" style="color:#f59e0b;">⚠ Review required</div>
+        </div>
+        <div class="preview-stat">
+          <div class="label">Fraud Alerts</div>
+          <div class="value">7</div>
+          <div class="trend" style="color:#ef4444;">● Critical attention</div>
+        </div>
+        <div class="preview-stat">
+          <div class="label">Risk Score</div>
+          <div class="value">Low</div>
+          <div class="trend">✓ Within targets</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;">Policy Distribution</div>
+        <div class="preview-bar-row">
+          <div class="preview-bar-item">
+            <span class="preview-bar-label">Health</span>
+            <div class="preview-bar-track"><div class="preview-bar-fill" style="width:72%;background:var(--teal-light);"></div></div>
+            <span class="preview-bar-val">72%</span>
+          </div>
+          <div class="preview-bar-item">
+            <span class="preview-bar-label">Life</span>
+            <div class="preview-bar-track"><div class="preview-bar-fill" style="width:55%;background:#6366f1;"></div></div>
+            <span class="preview-bar-val">55%</span>
+          </div>
+          <div class="preview-bar-item">
+            <span class="preview-bar-label">Auto</span>
+            <div class="preview-bar-track"><div class="preview-bar-fill" style="width:38%;background:#f59e0b;"></div></div>
+            <span class="preview-bar-val">38%</span>
+          </div>
+          <div class="preview-bar-item">
+            <span class="preview-bar-label">Property</span>
+            <div class="preview-bar-track"><div class="preview-bar-fill" style="width:28%;background:#2563eb;"></div></div>
+            <span class="preview-bar-val">28%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY InsurAI -->
+<section class="section" id="features">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-label"><i data-lucide="zap" style="width:13px;height:13px;"></i> Why InsurAI</div>
+      <h2 class="section-title">Everything you need to run corporate insurance</h2>
+      <p class="section-desc">InsurAI replaces fragmented insurance workflows with a single, intelligent platform that scales with your organization.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#EFF6FF;"><i data-lucide="brain" style="color:var(--blue-light);"></i></div>
+        <h3>AI Risk Analysis</h3>
+        <p>Machine learning models analyze historical data to predict risk levels, suggest premiums, and flag high-risk categories automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#F0FDFA;"><i data-lucide="shield-alert" style="color:var(--teal);"></i></div>
+        <h3>Real-Time Fraud Detection</h3>
+        <p>99% accurate AI fraud detection identifies suspicious claims patterns before they cost your organization money.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#ECFDF5;"><i data-lucide="clock" style="color:var(--green);"></i></div>
+        <h3>Automated Claims Processing</h3>
+        <p>Reduce claim processing time by 70% with intelligent routing, document verification, and automated approvals.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#EEF2FF;"><i data-lucide="bar-chart-2" style="color:var(--indigo);"></i></div>
+        <h3>Advanced Analytics</h3>
+        <p>Comprehensive dashboards and reports give leadership real-time visibility into claims, policies, and organizational risk.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#FFF7ED;"><i data-lucide="calendar" style="color:var(--amber);"></i></div>
+        <h3>Smart Policy Renewals</h3>
+        <p>Automated renewal reminders and processing ensure no policy lapses, complete with audit trails for compliance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:#F5F3FF;"><i data-lucide="users" style="color:var(--purple);"></i></div>
+        <h3>Role-Based Access Control</h3>
+        <p>Granular permissions for administrators, claims staff, and employees ensure secure, appropriate access at every level.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATISTICS -->
+<section class="section section-alt">
+  <div class="section-inner section-center">
+    <div class="section-label">Platform Impact</div>
+    <h2 class="section-title">Trusted by industry leaders worldwide</h2>
+    <p class="section-desc" style="margin-bottom:48px;">Real numbers from real companies using InsurAI to transform their insurance operations.</p>
+    <div class="stats-row">
+      <div class="stat-block"><div class="number">500<span class="unit">+</span></div><div class="label">Enterprise Clients</div></div>
+      <div class="stat-block"><div class="number">1M<span class="unit">+</span></div><div class="label">Policies Managed</div></div>
+      <div class="stat-block"><div class="number">250K<span class="unit">+</span></div><div class="label">Claims Processed</div></div>
+      <div class="stat-block"><div class="number">98<span class="unit">%</span></div><div class="label">Client Satisfaction</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-label">Workflow</div>
+      <h2 class="section-title">How InsurAI works</h2>
+      <p class="section-desc">From onboarding to continuous AI-powered optimization in three simple steps.</p>
+    </div>
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>Configure Your Organization</h3>
+        <p>Set up departments, policy templates, user roles, and compliance rules. Our guided setup takes under an hour.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>AI Learns Your Patterns</h3>
+        <p>InsurAI's models train on your historical data to personalize risk scoring, fraud thresholds, and claim routing.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>Automate and Monitor</h3>
+        <p>Watch claims process automatically, renewals send themselves, and fraud get caught before it costs you a dollar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROLE SOLUTIONS -->
+<section class="section section-alt" id="roles">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-label">Role Solutions</div>
+      <h2 class="section-title">Designed for every stakeholder</h2>
+      <p class="section-desc">InsurAI delivers a tailored experience for each role in your organization.</p>
+    </div>
+    <div class="role-grid">
+      <div class="role-card admin">
+        <div class="role-label">For Leadership</div>
+        <h3>Administrators</h3>
+        <ul>
+          <li>Full system analytics and oversight</li>
+          <li>User and role management</li>
+          <li>Fraud detection controls</li>
+          <li>Policy and renewal management</li>
+          <li>Custom report generation</li>
+          <li>AI risk engine configuration</li>
+        </ul>
+      </div>
+      <div class="role-card staff">
+        <div class="role-label">For Operations</div>
+        <h3>Claims Staff</h3>
+        <ul>
+          <li>Claim review workspace</li>
+          <li>AI-assisted claim recommendations</li>
+          <li>Document verification tools</li>
+          <li>Approve / reject with audit trail</li>
+          <li>Priority queue management</li>
+          <li>Real-time collaboration notes</li>
+        </ul>
+      </div>
+      <div class="role-card employee">
+        <div class="role-label">For Employees</div>
+        <h3>Self-Service Portal</h3>
+        <ul>
+          <li>View and download my policies</li>
+          <li>Submit claims with document upload</li>
+          <li>Track claim status in real-time</li>
+          <li>Receive renewal notifications</li>
+          <li>Update personal information</li>
+          <li>Digital policy certificates</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="section" id="security">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-label"><i data-lucide="lock" style="width:13px;height:13px;"></i> Security & Compliance</div>
+      <h2 class="section-title">Enterprise-grade security you can trust</h2>
+      <p class="section-desc">InsurAI is built to meet the strictest enterprise compliance requirements.</p>
+    </div>
+    <div class="security-grid">
+      <div class="security-item">
+        <div class="security-icon"><i data-lucide="lock"></i></div>
+        <div>
+          <h4>256-bit Encryption</h4>
+          <p>All data in transit and at rest is encrypted using industry-standard AES-256 encryption protocols.</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon"><i data-lucide="shield-check"></i></div>
+        <div>
+          <h4>SOC 2 Type II Certified</h4>
+          <p>Independently audited and certified for security, availability, and confidentiality controls.</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon"><i data-lucide="eye-off"></i></div>
+        <div>
+          <h4>GDPR & HIPAA Compliant</h4>
+          <p>Full compliance with global data privacy regulations for handling sensitive personal and health data.</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon"><i data-lucide="clock"></i></div>
+        <div>
+          <h4>99.99% Uptime SLA</h4>
+          <p>Guaranteed uptime backed by redundant infrastructure across multiple geographic regions.</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon"><i data-lucide="activity"></i></div>
+        <div>
+          <h4>Full Audit Trail</h4>
+          <p>Every action, approval, and configuration change is logged with timestamp and user attribution.</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon"><i data-lucide="key"></i></div>
+        <div>
+          <h4>Multi-Factor Authentication</h4>
+          <p>Enforce MFA for all users with support for TOTP, SMS, and hardware security keys.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-inner">
+    <h2>Ready to transform your insurance operations?</h2>
+    <p>Join 500+ companies that trust InsurAI to manage their corporate insurance intelligently.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="hero-btn-primary" onclick="openModal('signupModal')">Get Started Free</button>
+      <button class="hero-btn-secondary" onclick="openModal('loginModal')">Sign In</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="landing-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="margin-bottom:10px;">
+          <div class="nav-logo-icon"><i data-lucide="shield"></i></div>
+          <span style="color:white;font-size:18px;font-weight:800;">InsurAI</span>
+        </div>
+        <p>AI-powered corporate insurance automation platform. Trusted by 500+ enterprises worldwide.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#roles">Role Solutions</a></li>
+          <li><a href="#security">Security</a></li>
+          <li><a href="#how">How It Works</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">Compliance</a></li>
+          <li><a href="#">Cookie Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 InsurAI Corporation. All rights reserved.</span>
+      <span>Enterprise AI Insurance Platform v3.0</span>
+    </div>
+  </div>
+</footer>
+
+<!-- LOGIN MODAL -->
+<div class="modal-backdrop" id="loginModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('loginModal')"><i data-lucide="x"></i></button>
+    <div class="modal-logo">
+      <div class="modal-logo-icon"><i data-lucide="shield"></i></div>
+      <h3>InsurAI</h3>
+    </div>
+    <div class="modal-header">
+      <h2>Welcome back</h2>
+      <p>Sign in to your corporate insurance portal</p>
+    </div>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="user"></i></span>
+          <input type="text" id="loginUsername" class="form-control" placeholder="username" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="lock"></i></span>
+          <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray-600);cursor:pointer;">
+          <input type="checkbox" style="width:14px;height:14px;"> Remember me
+        </label>
+        <a href="#" style="font-size:13px;color:var(--blue-light);font-weight:500;">Forgot password?</a>
+      </div>
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;padding:11px 16px;font-size:14px;">
+        <i data-lucide="log-in"></i> Sign In to Portal
+      </button>
+      <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-top:16px;">
+        Don't have an account? <button type="button" onclick="switchModal('loginModal','signupModal')" style="color:var(--blue-light);font-weight:600;background:none;border:none;cursor:pointer;font-family:var(--font);">Create account</button>
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- SIGNUP MODAL -->
+<div class="modal-backdrop" id="signupModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('signupModal')"><i data-lucide="x"></i></button>
+    <div class="modal-logo">
+      <div class="modal-logo-icon"><i data-lucide="shield"></i></div>
+      <h3>InsurAI</h3>
+    </div>
+    <div class="modal-header">
+      <h2>Create your account</h2>
+      <p>Join your company's insurance platform</p>
+    </div>
+    <form onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="user"></i></span>
+          <input type="text" id="signupUsername" class="form-control" placeholder="johndoe" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Work Email</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="mail"></i></span>
+          <input type="email" id="signupEmail" class="form-control" placeholder="you@company.com" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="phone"></i></span>
+          <input type="tel" id="signupPhone" class="form-control" placeholder="+1 (555) 000-0000" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="briefcase"></i></span>
+          <select id="signupRole" class="form-control" required>
+            <option value="EMPLOYEE">Employee – Access self-service portal</option>
+            <option value="STAFF">Staff – Process and approve claims</option>
+            <option value="ADMIN">Admin – Full platform control</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="building"></i></span>
+          <input type="text" id="signupDepartment" class="form-control" placeholder="e.g. Engineering" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-group">
+          <span class="input-icon"><i data-lucide="lock"></i></span>
+          <input type="password" id="signupPassword" class="form-control" placeholder="Min. 8 characters" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;padding:11px 16px;font-size:14px;">
+        <i data-lucide="user-plus"></i> Create Account
+      </button>
+      <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-top:16px;">
+        Already have an account? <button type="button" onclick="switchModal('signupModal','loginModal')" style="color:var(--blue-light);font-weight:600;background:none;border:none;cursor:pointer;font-family:var(--font);">Sign in</button>
+      </p>
+    </form>
+  </div>
+</div>
+
+<script src="assets/js/api.js"></script>
+<script>
+  lucide.createIcons();
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function switchModal(from, to) {
+    closeModal(from); openModal(to);
+  }
+
+  // Close on backdrop click
+  document.querySelectorAll('.modal-backdrop').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+  });
+
+  // Auto-redirect if already logged in
+  document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('jwtToken');
+      const userStr = localStorage.getItem('user');
+      if(token && userStr) {
+          try {
+              const user = JSON.parse(userStr);
+              const role = user.role ? user.role.toUpperCase() : 'EMPLOYEE';
+              const dest = { ADMIN: 'admin/index.html', STAFF: 'staff/index.html', EMPLOYEE: 'employee/index.html' };
+              window.location.href = dest[role] || 'employee/index.html';
+          } catch(e) {
+              localStorage.clear();
+          }
+      }
+  });
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const ogText = toggleBtnLoading(btn, true);
+    try {
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await apiRequest('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+      });
+      
+      if(res && res.token && res.user) {
+          localStorage.setItem('jwtToken', res.token);
+          localStorage.setItem('user', JSON.stringify(res.user));
+          showToast('Login successful!', 'success');
+          
+          setTimeout(() => {
+              const role = res.user.role ? res.user.role.toUpperCase() : 'EMPLOYEE';
+              const dest = { ADMIN: 'admin/index.html', STAFF: 'staff/index.html', EMPLOYEE: 'employee/index.html' };
+              window.location.href = dest[role] || 'employee/index.html';
+          }, 800);
+      } else {
+          throw new Error('Invalid response from server');
+      }
+    } catch(err) {
+      showToast(err.message || 'Login failed', 'error');
+      toggleBtnLoading(btn, false, ogText);
+    }
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const ogText = toggleBtnLoading(btn, true);
+    try {
+      const data = {
+        username: document.getElementById('signupUsername').value,
+        email: document.getElementById('signupEmail').value,
+        phone: document.getElementById('signupPhone').value,
+        role: document.getElementById('signupRole').value,
+        department: document.getElementById('signupDepartment').value,
+        password: document.getElementById('signupPassword').value
+      };
+
+      const res = await apiRequest('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(data)
+      });
+      
+      if (res && res.token && res.user) {
+          localStorage.setItem('jwtToken', res.token);
+          localStorage.setItem('user', JSON.stringify(res.user));
+          showToast('Account created successfully!', 'success');
+          
+          setTimeout(() => {
+              const role = res.user.role ? res.user.role.toUpperCase() : 'EMPLOYEE';
+              const dest = { ADMIN: 'admin/index.html', STAFF: 'staff/index.html', EMPLOYEE: 'employee/index.html' };
+              window.location.href = dest[role] || 'employee/index.html';
+          }, 800);
+      } else {
+         showToast('Account created successfully! Please log in.', 'success');
+         switchModal('signupModal', 'loginModal');
+         toggleBtnLoading(btn, false, ogText);
+      }
+    } catch(err) {
+      showToast(err.message || 'Registration failed', 'error');
+      toggleBtnLoading(btn, false, ogText);
+    }
+  }
+</script>
+</body>
+</html>

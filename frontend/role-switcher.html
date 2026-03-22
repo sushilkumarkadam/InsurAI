@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Role Switcher - InsurAI</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/lucide.min.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4 font-[Inter]">
+  <div class="max-w-5xl w-full">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-3 mb-4">
+        <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+          <i data-lucide="shield" class="h-10 w-10 text-white"></i>
+        </div>
+      </div>
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">InsurAI</h1>
+      <p class="text-xl text-gray-600">Corporate Policy Automation & Intelligence System</p>
+      <p class="text-sm text-gray-500 mt-2">Select your role to continue</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Admin -->
+      <a href="admin/index.html" class="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 block">
+        <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white">
+          <i data-lucide="shield" class="h-12 w-12 mb-4"></i>
+          <h2 class="text-2xl font-semibold mb-2">Admin</h2>
+          <p class="text-blue-100 text-sm">Full system control and management</p>
+        </div>
+        <div class="p-6 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Access Dashboard</span>
+          <i data-lucide="arrow-right" class="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all"></i>
+        </div>
+      </a>
+
+      <!-- Staff -->
+      <a href="staff/index.html" class="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 block">
+        <div class="bg-gradient-to-br from-cyan-500 to-cyan-700 p-8 text-white">
+          <i data-lucide="users" class="h-12 w-12 mb-4"></i>
+          <h2 class="text-2xl font-semibold mb-2">Staff</h2>
+          <p class="text-cyan-100 text-sm">Process and manage claims</p>
+        </div>
+        <div class="p-6 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Access Dashboard</span>
+          <i data-lucide="arrow-right" class="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all"></i>
+        </div>
+      </a>
+
+      <!-- Employee -->
+      <a href="employee/index.html" class="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 block">
+        <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 p-8 text-white">
+          <i data-lucide="user" class="h-12 w-12 mb-4"></i>
+          <h2 class="text-2xl font-semibold mb-2">Employee</h2>
+          <p class="text-indigo-100 text-sm">Submit claims and view policies</p>
+        </div>
+        <div class="p-6 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700">Access Dashboard</span>
+          <i data-lucide="arrow-right" class="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all"></i>
+        </div>
+      </a>
+    </div>
+
+    <div class="mt-12 text-center flex flex-col items-center gap-4">
+      <a href="index.html" class="text-primary hover:text-blue-800 text-sm font-medium flex items-center gap-1 transition-colors">
+        <i data-lucide="arrow-left" class="h-4 w-4"></i> Back to Home
+      </a>
+      <p class="text-sm text-gray-500">
+        Demo Application • All roles available for testing
+      </p>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

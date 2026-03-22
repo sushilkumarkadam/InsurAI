@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Process Claims – InsurAI Staff</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+  <div class="page-header-row">
+    <div><h1>Claim Review Workspace</h1><p>Review, approve, or reject insurance claims assigned to you</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm"><i data-lucide="filter"></i> Filter</button>
+    </div>
+  </div>
+
+  <div class="grid-12">
+    <!-- Claims List Panel -->
+    <div class="card" style="padding:0;overflow:hidden; max-height: calc(100vh - 200px); overflow-y: auto;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--gray-200); position: sticky; top: 0; background: white; z-index: 5;">
+        <div class="filter-search" style="max-width:100%;"><i data-lucide="search"></i><input type="text" placeholder="Search claims…" id="claimSearch"></div>
+      </div>
+      <div id="staffClaimsList">
+          <div style="padding:20px; text-align:center; color:var(--gray-400);">Loading claims...</div>
+      </div>
+    </div>
+
+    <!-- Claim Detail Workspace -->
+    <div id="claimWorkspace" style="display:flex;flex-direction:column;gap:14px; opacity: 0.5; pointer-events: none;">
+      <!-- Placeholder when no claim selected -->
+       <div class="card" style="text-align:center; padding: 60px 20px;">
+           <i data-lucide="mouse-pointer-2" style="width:40px; height:40px; color:var(--gray-300); margin-bottom:12px;"></i>
+           <p style="color:var(--gray-500);">Select a claim from the list to start reviewing</p>
+       </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  let ALL_CLAIMS = [];
+  let SELECTED_CLAIM = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('staff', window.location.pathname);
+    requireAuth(['STAFF', 'ADMIN']);
+    
+    await loadClaims();
+  });
+
+  async function loadClaims() {
+      try {
+          ALL_CLAIMS = await apiRequest('/claims/all', { method: 'GET' });
+          renderClaimsList(ALL_CLAIMS);
+      } catch (err) {
+          console.error('Failed to load claims', err);
+          document.getElementById('staffClaimsList').innerHTML = '<div style="padding:20px; color:red;">Failed to load claims</div>';
+      }
+  }
+
+  function renderClaimsList(claims) {
+      const list = document.getElementById('staffClaimsList');
+      list.innerHTML = '';
+      if(!claims || claims.length === 0) {
+          list.innerHTML = '<div style="padding:20px; color:var(--gray-400);">No claims found</div>';
+          return;
+      }
+
+      claims.forEach(c => {
+          const div = document.createElement('div');
+          const isActive = SELECTED_CLAIM && SELECTED_CLAIM.id === c.id;
+          div.style = `padding:14px 16px;cursor:pointer; border-bottom:1px solid var(--gray-100); transition: all 0.2s; ${isActive ? 'background:var(--gray-50); border-left:3px solid var(--blue-light);' : ''}`;
+          
+          let badgeClass = 'badge-amber';
+          if(c.status === 'APPROVED') badgeClass = 'badge-green';
+          if(c.status === 'REJECTED') badgeClass = 'badge-red';
+
+          div.onclick = () => selectClaim(c);
+          div.innerHTML = `
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <strong style="font-size:13.5px;">CLM-${c.id}</strong>
+                <span class="badge ${badgeClass}">${c.status}</span>
+              </div>
+              <div style="font-size:12.5px;color:var(--gray-500);">${c.username || 'User ' + (c.userId || '-')} · ₹${(c.amount || 0).toLocaleString()}</div>
+              <div style="font-size:11.5px;color:var(--gray-400);margin-top:4px;">Filed: ${new Date(c.dateSubmitted || c.createdAt || new Date()).toLocaleDateString()}</div>
+          `;
+          list.appendChild(div);
+      });
+      if(window.lucide) lucide.createIcons();
+  }
+
+  function selectClaim(claim) {
+      SELECTED_CLAIM = claim;
+      renderClaimsList(ALL_CLAIMS); // Refresh active state
+      
+      const workspace = document.getElementById('claimWorkspace');
+      workspace.style.opacity = '1';
+      workspace.style.pointerEvents = 'all';
+
+      let badgeClass = 'badge-amber';
+      if(claim.status === 'APPROVED') badgeClass = 'badge-green';
+      if(claim.status === 'REJECTED') badgeClass = 'badge-red';
+
+      workspace.innerHTML = `
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Claim ID</div>
+                <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 4px;">CLM-${claim.id}</h2>
+                <span class="badge ${badgeClass} badge-dot">${claim.status}</span>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-danger" onclick="updateStatus('REJECTED')"><i data-lucide="x-circle"></i> Reject</button>
+                <button class="btn btn-primary" onclick="updateStatus('APPROVED')"><i data-lucide="check-circle"></i> Approve</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+              <div style="padding:10px;background:var(--gray-50);border-radius:var(--r-md);"><div style="font-size:11px;color:var(--gray-400);font-weight:600;">CLAIMANT</div><div style="font-weight:600;margin-top:3px;">${claim.username || 'User ' + (claim.userId || '-')}</div></div>
+              <div style="padding:10px;background:var(--gray-50);border-radius:var(--r-md);"><div style="font-size:11px;color:var(--gray-400);font-weight:600;">AMOUNT</div><div style="font-weight:600;margin-top:3px;">₹${(claim.amount || 0).toLocaleString()}</div></div>
+              <div style="padding:10px;background:var(--gray-50);border-radius:var(--r-md);"><div style="font-size:11px;color:var(--gray-400);font-weight:600;">POLICY</div><div style="font-weight:600;margin-top:3px;">${claim.policyTitle || 'POL-'+(claim.policyId || 'N/A')}</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i data-lucide="file-text" style="width:16px;height:16px;color:var(--blue-light);"></i> Claim Reason / Description</div>
+            <p style="font-size:13.5px;color:var(--gray-800);line-height:1.7;margin:0 0 6px;"><strong>Type:</strong> <span class="badge badge-blue">${claim.claimType || 'General'}</span></p>
+            <p style="font-size:13.5px;color:var(--gray-600);line-height:1.7;margin:0;">${claim.reason || 'No description provided.'}</p>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i data-lucide="paperclip" style="width:16px;height:16px;color:var(--gray-500);"></i> Documents</div>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="docList">
+                <div style="padding:10px; text-align:center; color:var(--gray-400); font-size:13px;">No documents uploaded.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i data-lucide="edit" style="width:16px;height:16px;color:var(--gray-500);"></i> Internal Notes</div>
+            <div class="form-group">
+              <textarea class="form-control" rows="3" placeholder="Add review comments for history…"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;">
+               <button class="btn btn-outline btn-sm"><i data-lucide="save"></i> Save Note</button>
+            </div>
+        </div>
+      `;
+      
+      if(window.lucide) lucide.createIcons();
+  }
+
+  async function updateStatus(status) {
+      if(!SELECTED_CLAIM) return;
+      if(!confirm(`Are you sure you want to mark CLM-${SELECTED_CLAIM.id} as ${status}?`)) return;
+      
+      try {
+          await apiRequest(`/claims/${SELECTED_CLAIM.id}/status?status=${status}`, { method: 'PUT' });
+          showToast(`Claim status updated to ${status}`, 'success');
+          await loadClaims();
+          // Find updated claim object after reload
+          const updated = ALL_CLAIMS.find(c => c.id === SELECTED_CLAIM.id);
+          if(updated) selectClaim(updated);
+      } catch (err) {
+          showToast('Failed to update status: ' + err.message, 'error');
+      }
+  }
+</script>
+</body></html>
+</body></html>

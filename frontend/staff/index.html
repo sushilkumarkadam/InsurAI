@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Dashboard – InsurAI</title>
+  <link rel="stylesheet" href="../assets/css/design.css">
+  <script src="../assets/js/lucide.min.js"></script>
+  <script src="../assets/js/chart.min.js"></script>
+</head>
+<body>
+<div id="app-layout">
+
+  <!-- AI Banner for Staff -->
+  <div class="ai-banner" style="background:linear-gradient(135deg,#0f3d38,#0e655e);">
+    <div class="ai-banner-icon"><i data-lucide="brain"></i></div>
+    <div class="ai-banner-text">
+      <h4>AI Assistant Ready</h4>
+      <p id="staffBannerText">Loading claim queue status...</p>
+    </div>
+    <div class="ai-banner-actions">
+      <button class="btn-ai solid" onclick="window.location.href='claims.html'"><i data-lucide="arrow-right"></i> Start Review Queue</button>
+    </div>
+  </div>
+
+  <div class="page-header-row">
+    <div><h1>Staff Dashboard</h1><p id="staffDateLine">Your claim processing workspace</p></div>
+    <div style="display:flex;gap:8px;">
+      <a href="claims.html" class="btn btn-primary"><i data-lucide="alert-circle"></i> Process Claims</a>
+    </div>
+  </div>
+
+  <!-- Staff KPIs -->
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card teal"><div class="stat-icon teal"><i data-lucide="list"></i></div><div class="stat-label">Total Claims</div><div class="stat-value" id="statStaffTotal" style="font-size:22px;">...</div></div>
+    <div class="stat-card red"><div class="stat-icon red"><i data-lucide="alert-triangle"></i></div><div class="stat-label">Pending Claims</div><div class="stat-value" id="statStaffPending" style="font-size:22px;">...</div></div>
+    <div class="stat-card green"><div class="stat-icon green"><i data-lucide="check-circle"></i></div><div class="stat-label">Approved</div><div class="stat-value" id="statStaffApproved" style="font-size:22px;">...</div></div>
+    <div class="stat-card amber"><div class="stat-icon amber"><i data-lucide="clock"></i></div><div class="stat-label">Total Policies</div><div class="stat-value" id="statStaffPolicies" style="font-size:22px;">...</div></div>
+  </div>
+
+  <div class="grid-12 mb-16">
+    <!-- Claim Queue -->
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title"><i data-lucide="list" style="width:16px;height:16px;color:var(--teal);"></i> Your Claim Queue</span>
+        <a href="claims.html" class="btn btn-teal btn-sm">View All</a>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Claim ID</th><th>Employee</th><th>Policy</th><th>Amount</th><th>Risk</th><th>Submitted</th><th>Action</th></tr></thead>
+          <tbody id="staffClaimsQueue">
+            <tr><td colspan="7" style="text-align:center;">Loading claim queue...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI Recommendations + Document Tasks -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card" style="background:linear-gradient(135deg,#0f3d38,#0e655e);border:none;">
+        <div style="font-size:13px;font-weight:700;color:white;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><i data-lucide="brain" style="width:15px;height:15px;color:var(--teal-light);"></i> AI Recommendations</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:10px;font-size:12.5px;color:rgba(255,255,255,0.8);">
+            <strong style="color:var(--teal-light);">High-Risk Claims First</strong><br>Claims with risk score &gt; 70 should be reviewed and escalated to admin immediately.
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:10px;font-size:12.5px;color:rgba(255,255,255,0.8);">
+            <strong style="color:#22c55e;">Fast-track Low Risk</strong><br>Claims with risk score &lt; 30 and complete documentation can be approved quickly.
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:10px;font-size:12.5px;color:rgba(255,255,255,0.8);">
+            <strong style="color:#f59e0b;">Request Missing Docs</strong><br>Always verify supporting documents are attached before approving high-value claims.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Processing Summary</div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="staffSummaryPanel">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;"><span>Approved Today</span><span class="badge badge-green" id="summaryApproved">...</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;"><span>Rejected Today</span><span class="badge badge-red" id="summaryRejected">...</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;"><span>Fraud Alerts Active</span><span class="badge badge-amber" id="summaryFraud">...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Claim Status Chart -->
+  <div class="card">
+    <div class="card-title"><i data-lucide="bar-chart-2" style="width:16px;height:16px;color:var(--teal);"></i> Claim Processing Overview</div>
+    <div class="chart-wrap"><canvas id="staffChart"></canvas></div>
+  </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initLayout('staff', window.location.pathname);
+    requireAuth(['STAFF', 'ADMIN']);
+
+    // Set date line
+    document.getElementById('staffDateLine').textContent =
+      'Your claim processing workspace — ' + new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+
+    // Load dashboard stats
+    let statData = null;
+    try {
+        statData = await apiRequest('/dashboard/staff', { method: 'GET' });
+        if(statData) {
+            document.getElementById('statStaffTotal').textContent = statData.totalClaims ?? 0;
+            document.getElementById('statStaffPending').textContent = statData.pendingClaims ?? 0;
+            document.getElementById('statStaffApproved').textContent = statData.approvedClaims ?? 0;
+            document.getElementById('statStaffPolicies').textContent = statData.totalPolicies ?? 0;
+
+            // Update summary panel
+            document.getElementById('summaryApproved').textContent = statData.approvedClaims ?? 0;
+            document.getElementById('summaryRejected').textContent = statData.rejectedClaims ?? 0;
+            document.getElementById('summaryFraud').textContent = statData.fraudAlerts ?? 0;
+
+            // Update AI banner
+            const pending = statData.pendingClaims || 0;
+            document.getElementById('staffBannerText').textContent =
+              `${pending} claim${pending !== 1 ? 's' : ''} queued for review · ${statData.fraudAlerts || 0} fraud alert${(statData.fraudAlerts||0) !== 1 ? 's' : ''} active · AI assistance enabled`;
+        }
+    } catch(err) {
+        console.error('Failed to load staff stats', err);
+    }
+
+    // Load claims queue
+    await loadClaimsQueue();
+
+    // Render chart after stats are loaded
+    const chartCtx = document.getElementById('staffChart')?.getContext('2d');
+    if(chartCtx) {
+      new Chart(chartCtx, {
+        type:'bar',
+        data:{
+          labels:['Overview'],
+          datasets:[
+            {label:'Pending', data:[statData ? (statData.pendingClaims || 0) : 0], backgroundColor:'#D97706', borderRadius:4},
+            {label:'Approved', data:[statData ? (statData.approvedClaims || 0) : 0], backgroundColor:'#059669', borderRadius:4},
+            {label:'Rejected', data:[statData ? (statData.rejectedClaims || 0) : 0], backgroundColor:'#DC2626', borderRadius:4}
+          ]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          scales:{x:{grid:{display:false}}, y:{grid:{borderDash:[4,4]}, beginAtZero:true}},
+          plugins:{legend:{position:'top'}}
+        }
+      });
+    }
+  });
+
+  async function loadClaimsQueue() {
+    try {
+        const claims = await apiRequest('/claims/all', { method: 'GET' });
+        const tbody = document.getElementById('staffClaimsQueue');
+        tbody.innerHTML = '';
+
+        if(!claims || claims.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);">No claims in queue</td></tr>';
+            return;
+        }
+
+        // Show all claims, sorted by pending first
+        const sorted = [...claims].sort((a, b) => {
+            const order = {PENDING: 0, PROCESSING: 1, APPROVED: 2, REJECTED: 3};
+            return (order[a.status] ?? 99) - (order[b.status] ?? 99);
+        });
+
+        sorted.forEach(c => {
+            const tr = document.createElement('tr');
+            const status = c.status || 'PENDING';
+            const risk = c.riskScore ?? '—';
+            const riskColor = !c.riskScore ? 'var(--gray-400)' : c.riskScore >= 70 ? 'var(--red)' : c.riskScore >= 40 ? 'var(--amber)' : 'var(--green)';
+
+            let actionHtml = '';
+            if(status === 'PENDING') {
+                actionHtml = `
+                  <button class="btn btn-primary btn-sm" onclick="updateClaimStatus(${c.id}, 'APPROVED')">Approve</button>
+                  <button class="btn btn-danger btn-sm" onclick="updateClaimStatus(${c.id}, 'REJECTED')">Reject</button>
+                `;
+            } else {
+                const badgeMap = {APPROVED:'badge-green', REJECTED:'badge-red', PROCESSING:'badge-blue'};
+                actionHtml = `<span class="badge ${badgeMap[status]||'badge-gray'}">${status}</span>`;
+            }
+
+            const submittedDate = c.dateSubmitted
+                ? new Date(c.dateSubmitted).toLocaleDateString()
+                : '—';
+
+            tr.innerHTML = `
+                <td><strong>CLM-${c.id}</strong></td>
+                <td>${c.username || 'User ' + (c.userId || '?')}</td>
+                <td>${c.policyTitle || c.policyType || 'Policy ' + (c.policyId || '?')}</td>
+                <td>₹${(c.amount||0).toLocaleString()}</td>
+                <td><span style="color:${riskColor};font-weight:700;">${risk}${c.riskScore ? '%' : ''}</span></td>
+                <td>${submittedDate}</td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap;">${actionHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        if(window.lucide) lucide.createIcons();
+    } catch(err) {
+        console.error('Failed to load claims queue', err);
+        document.getElementById('staffClaimsQueue').innerHTML =
+          '<tr><td colspan="7" style="text-align:center;color:var(--red);">Error loading claims queue. Please refresh.</td></tr>';
+    }
+  }
+
+  async function updateClaimStatus(claimId, newStatus) {
+    if(!confirm(`Are you sure you want to mark this claim as ${newStatus}?`)) return;
+    try {
+        await apiRequest(`/claims/${claimId}/status?status=${newStatus}`, { method: 'PUT' });
+        showToast(`Claim #CLM-${claimId} successfully marked as ${newStatus}`, 'success');
+        await loadClaimsQueue();
+    } catch(err) {
+        showToast(err.message || 'Failed to update claim status', 'error');
+    }
+  }
+</script>
+</body></html>
